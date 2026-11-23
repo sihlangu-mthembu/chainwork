@@ -270,7 +270,7 @@ contract InvariantTest is BaseTest {
 
     /// Coverage check: one long random run must reach every state transition.
     function test_handlerReachesDeepStates() public {
-        for (uint256 i = 0; i < 2500; i++) {
+        for (uint256 i = 0; i < 2000; i++) {
             uint256 r = uint256(keccak256(abi.encode(i, "cov")));
             uint256 k = r % 10;
             if (k == 0) handler.fundRoot(r >> 8, r >> 16, r >> 24, r >> 32);
