@@ -16,15 +16,32 @@ jobs:
           version: stable
       - name: Build (shanghai, solc 0.8.28)
         run: forge build --sizes
-      - name: Test (unit + fuzz + invariants)
+      - name: Test (unit + fuzz + invariants, against Circle FiatToken V2.2 bytecode)
         run: forge test -vv
 
-  typescript:
+  sdk-e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Typecheck shared types
-        run: npx -y -p typescript@5 tsc --noEmit --strict --target es2022 --module esnext packages/types/src/index.ts
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm -F @chainwork/types typecheck && pnpm -F @chainwork/sdk typecheck
+      - name: Local chain (shanghai) + deploy
+        run: |
+          anvil --hardfork shanghai --silent &
+          sleep 2
+          forge script contracts/script/Deploy.s.sol:DeployLocal --rpc-url http://127.0.0.1:8545 --broadcast
+      - name: SDK unit + end-to-end tests
+        run: CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test

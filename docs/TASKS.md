@@ -35,10 +35,10 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T2.1 | `@chainwork/sdk`: termsHash, signFunding (EOA + smart account), quote validation (payTo == escrow, sane bond/expiry) | `pnpm -F sdk test` | todo |
-| T2.2 | hire (via facilitator or direct), accept (permit), subcontract, submit, submitWithProof, challenge, finalize, settleTree | `pnpm -F sdk test` | todo |
-| T2.3 | readTree(rootId) from getJobsPage/getChildren → `JobNode`; UI state mapping; receipt builder | `pnpm -F sdk test` | todo |
-| T2.4 | Plain-English error decoding for every custom error | snapshot test | todo |
+| T2.1 | `@chainwork/sdk`: termsHash, signFunding (EOA + AgentAccount session), quote validation (payTo == escrow, sane bond/expiry, worst-case loss) | `pnpm -F @chainwork/sdk test` | done (claude) |
+| T2.2 | fund (direct or via facilitator), accept (permit), subcontract, submit, submitParent, submitWithProof, challenge, finalize, settleTree; retries on transient RPC errors | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
+| T2.3 | readTree(rootId) via eth_call only → `JobNode`; UI state mapping; receipt builder with 500-block log chunks | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
+| T2.4 | Plain-English error decoding for every custom error and FiatToken revert string | `pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.5 | `scripts/gate1.ts`: fund → accept → submit → finalize on Aevum (run by human) | **G1** | todo |
 
 ## L3 Services (DeepSeek)
