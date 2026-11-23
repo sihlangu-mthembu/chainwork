@@ -1,0 +1,27 @@
+[profile.default]
+src = "contracts/src"
+test = "contracts/test"
+script = "contracts/script"
+out = "out"
+libs = ["lib"]
+# Aevum (cdk-erigon validium) has no Cancun opcodes: MCOPY, TSTORE/TLOAD, BLOBBASEFEE are invalid.
+# See docs/CONTEXT.md. Never change this to cancun.
+evm_version = "shanghai"
+solc_version = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "ipfs"
+cbor_metadata = true
+remappings = ["@chainwork/interfaces/=interfaces/"]
+allow_paths = ["interfaces"]
+
+[fuzz]
+runs = 1000
+
+[invariant]
+runs = 256
+depth = 64
+fail_on_revert = false
+
+[rpc_endpoints]
+aevum = "https://rpc-test.qday.info"

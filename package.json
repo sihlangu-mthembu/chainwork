@@ -1,0 +1,15 @@
+{
+  "name": "chainwork",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "demo:all": "pnpm -F agents demo:all",
+    "demo:reset": "pnpm -F agents demo:reset",
+    "demo:seed": "pnpm -F agents demo:seed"
+  }
+}

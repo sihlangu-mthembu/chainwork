@@ -1,0 +1,8 @@
+Chainwork
+Copyright (c) 2026 Chainwork contributors. Licensed under the MIT License (see LICENSE).
+
+Third-party code and specifications used (every borrowed snippet is also marked in a comment above it):
+
+- ERC-8183 Agentic Commerce (draft) interface shapes — https://eips.ethereum.org/EIPS/eip-8183 (CC0)
+- (to be filled as dependencies are added: OpenZeppelin Contracts (MIT), forge-std (MIT/Apache-2.0),
+  Circle stablecoin-evm FiatToken V2.2 — tests only (Apache-2.0), viem (MIT), ...)
