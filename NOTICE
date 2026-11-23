@@ -4,5 +4,9 @@ Copyright (c) 2026 Chainwork contributors. Licensed under the MIT License (see L
 Third-party code and specifications used (every borrowed snippet is also marked in a comment above it):
 
 - ERC-8183 Agentic Commerce (draft) interface shapes — https://eips.ethereum.org/EIPS/eip-8183 (CC0)
-- (to be filled as dependencies are added: OpenZeppelin Contracts (MIT), forge-std (MIT/Apache-2.0),
-  Circle stablecoin-evm FiatToken V2.2 — tests only (Apache-2.0), viem (MIT), ...)
+- OpenZeppelin Contracts v5.1.0 — https://github.com/OpenZeppelin/openzeppelin-contracts (MIT), git submodule in lib/
+- forge-std v1.9.4 — https://github.com/foundry-rs/forge-std (MIT / Apache-2.0), git submodule in lib/
+- Circle stablecoin-evm FiatTokenV2_2 + SignatureChecker, commit fc85788bc7c23cefe3df1a757133048bfddadeaa —
+  https://github.com/circlefin/stablecoin-evm (Apache-2.0, Copyright 2023 Circle Internet Group, Inc.).
+  Used only as compiled bytecode in contracts/test/fixtures/FiatTokenV2_2.json for tests and the local chain,
+  so Chainwork is tested against the same token logic as tUSD8 on Aevum. Not deployed to Aevum.

@@ -84,7 +84,7 @@ FiatToken quirks: blacklist exists (`isBlacklisted`); EIP-3009 nonces are arbitr
 | Contract verification | explorer reportedly can't verify source → `scripts/verify-bytecode.sh` | |
 
 ## Faucets
-- https://faucet.qday.info/en: 5 tQDAY per address per 24 h
+- https://faucet.qday.info/en: 5 tQDAY per recipient per 24 h; **tUSD8 tab: 1 tUSD8 per 24 h**. Both require the recipient to hold ETH, USDT or USDC on Ethereum mainnet (Cloudflare Turnstile protected). Fresh wallets are not eligible.
 - Discord `/faucet` in #faucet: 1 tQDAY + 5 tUSD8 (verified members)
 - Implication: demo prices are cents (0.03–0.10 tUSD8).
 
@@ -97,17 +97,17 @@ FiatToken quirks: blacklist exists (`isBlacklisted`); EIP-3009 nonces are arbitr
 ## Wallets (addresses only — keys live in local .env)
 | Role | Address |
 |---|---|
-| deployer / facilitator relayer | TBD |
-| client | TBD |
-| coordinator (keep at 0 tUSD8) | TBD |
-| specialist-data | TBD |
-| specialist-bad | TBD |
-| backup | TBD |
-| watcher | TBD |
-| evaluator | TBD |
+| deployer / facilitator relayer | `0x583BEfc4f5427C1d1d2E366EDAD25568e58154A1` |
+| client | `0xbE213deEEf489afDf67842F411472Aa90f8f8D77` |
+| coordinator (keep at 0 tUSD8) | `0x28C0B52FAd3Ce860324C3DA7DfDdcD7b94cEA40A` |
+| specialist-data | `0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3` |
+| specialist-bad | `0x80Dec5f266418EB8ae26A6C2Ee592c9082E4c00d` |
+| backup | `0x7117c6741d15f794751C447Df5F96F48501D1DA9` |
+| watcher | `0xFCEB78c36c369d0C90a6c91d4498A1991Ed036bd` |
+| evaluator | `0x6024AaEC247E11c53c9799ED018D67Ee2B5373e4` |
 
 ## Open questions
-- [ ] Starter kit contents (includes a `Checkout.sol` other entries reuse; full judging criteria)
+- [x] Starter kit = 8-page PDF guide (no code). Judging wording saved in the OneDrive reference folder; key asks: smart accounts, scoped sessions, budgets, expiry; retries/idempotency; secure key storage; revocation controls; assumptions/limitations/roadmap in README.
 - [ ] Bundler reachable from a server, and which EntryPoint it serves
 - [ ] Sourcify support for chain 44005
 - [ ] Public QDay x402 facilitator endpoint, if any

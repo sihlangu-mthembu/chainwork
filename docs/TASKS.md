@@ -9,27 +9,27 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T0.1 | Create 8 wallets: deployer/facilitator relayer, client, coordinator, specialist-data, specialist-bad, backup, watcher, evaluator. Keys only in local `.env`. | `.env` filled; addresses listed in `docs/CONTEXT.md` (addresses only) | todo |
+| T0.1 | 8 wallets generated (addresses in CONTEXT.md). Keys go into encrypted keystores in `C:\dev\chainwork` once that folder is connected; never committed | keystores exist locally | in-progress (claude) |
 | T0.2 | Faucet: 5 tQDAY to every wallet (web faucet, 24 h limit). Discord `/faucet` tUSD8 for client, specialist-bad, backup, watcher. **Leave the coordinator at 0 tUSD8** (that's the demo). | balances visible on the explorer | todo |
-| T0.3 | Download the starter kit from the challenge page; put it in `reference/starter-kit/` (gitignored) and tell Claude | folder exists | todo |
-| T0.4 | Ask in Discord: does Sourcify support chain 44005? Is the QDay x402 facilitator endpoint public? Can we get a tUSD8 top-up for demo wallets? | answers added to CONTEXT.md | todo |
-| T0.5 | Move this repo **out of OneDrive** (e.g. `C:\dev\chainwork`) or exclude `node_modules`/`out`/`.git` from sync; OneDrive corrupts git and slows installs | `git status` clean after a sync | todo |
-| T0.6 | Create the public GitHub repo (MIT) and attach it to the Claude session | repo URL in README | todo |
+| T0.3 | Starter kit = 8-page PDF guide; notes in the OneDrive `reference/starter-guide-notes.md` (official judging wording) | done | done (claude) |
+| T0.4 | Discord: faucet top-up requested (the web faucet needs a mainnet balance; tUSD8 web faucet is 1/day). Also ask: Sourcify for 44005? public x402 facilitator endpoint? | answers added to CONTEXT.md | in-progress (human) |
+| T0.5 | Clone the repo to `C:\dev\chainwork` (outside OneDrive) and connect that folder to the Claude desktop app | folder connected | todo (human) |
+| T0.6 | Public GitHub repo created and attached: https://github.com/sihlangu-mthembu/chainwork | repo URL in README | done (claude) |
 
 ## L1 Contracts (Claude)
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T1.1 | Foundry setup: forge-std, OpenZeppelin (non-transient ReentrancyGuard, SafeERC20, ECDSA, MerkleProof), vendored Circle FiatToken V2.2 for tests (attributed) | `forge build` | todo |
-| T1.2 | ReputationRegistry: stats, score, bondBps curve, requiredBond, creditLimit, getSummary; onlyEscrow writes | `forge test --mc Reputation` | todo |
-| T1.3 | ChainworkEscrow core: ERC-8183 lifecycle, hooks, claimRefund, read views | `forge test --mc EscrowCore` | todo |
-| T1.4 | Gasless funding: termsHash, fundWithAuthorization via receiveWithAuthorization (EOA and ERC-1271 client) | `forge test --mc Funding` | todo |
-| T1.5 | acceptJob with permit bonds; settlement and bond routing rules | `forge test --mc Bonds` | todo |
-| T1.6 | createSubJob, credit check, child settlement, childrenRoot, maxSubcontract | `forge test --mc SubJobs` | todo |
-| T1.7 | Challenges: challenge, finalize, evaluator resolution, challenge-bond routing; settleTree | `forge test --mc Challenge` | todo |
-| T1.8 | BudgetGuardHook; HashVerifier; SignedDataVerifier | `forge test --mc "Guard|Verifier"` | todo |
-| T1.9 | DeployLocal script for anvil (mock tUSD8 = FiatToken V2.2 copy, seeded wallets) | `anvil & forge script DeployLocal --broadcast` prints addresses | todo |
-| T1.10 | Invariant suite I1–I7 + 1,000-run fuzz; DeployAevum script; deploy; write `deployments/aevum.json` | `forge test`; addresses on explorer | todo |
+| T1.1 | Foundry setup: forge-std, OpenZeppelin 5.1, Circle FiatToken V2.2 test fixture (pre-linked, attributed) | `forge build` | done (claude) |
+| T1.2 | ReputationRegistry: stats, score, bondBps curve, requiredBond, creditLimit, getSummary; onlyEscrow writes | `forge test --mc SubJobs` | done (claude) |
+| T1.3 | ChainworkEscrow core: ERC-8183 lifecycle, hooks, claimRefund, read views | `forge test --mc "Funding|Views"` | done (claude) |
+| T1.4 | Gasless funding: termsHash, fundWithAuthorization via receiveWithAuthorization (EOA and ERC-1271 client) | `forge test --mc "Funding|AgentAccount"` | done (claude) |
+| T1.5 | acceptJob with permit bonds; settlement and bond routing rules | `forge test --mc Bonds` | done (claude) |
+| T1.6 | createSubJob, credit check, child settlement, childrenRoot, maxSubcontract | `forge test --mc SubJobs` | done (claude) |
+| T1.7 | Challenges: challenge, finalize, evaluator resolution, challenge-bond routing; settleTree | `forge test --mc Challenge` | done (claude) |
+| T1.8 | BudgetGuardHook; HashVerifier; SignedDataVerifier; **AgentAccount** (ERC-1271 smart account, scoped session keys) | `forge test --mc "Guard|Verifier|AgentAccount"` | done (claude) |
+| T1.9 | DeployLocal script for anvil (real FiatToken V2.2 as tUSD8, funded roles, coordinator at 0) | `anvil --hardfork shanghai & forge script contracts/script/Deploy.s.sol:DeployLocal --rpc-url http://127.0.0.1:8545 --broadcast` | done (claude) |
+| T1.10 | Invariant suite (I1, I2, I4, terminal-holds-nothing; guided handler reaches every transition) done. DeployAevum script done. **Deploy to Aevum waits on testnet funds** | `forge test`; addresses on explorer | in-progress (claude) |
 
 ## L2 SDK (Claude)
 
@@ -50,6 +50,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T3.2 | `services/indexer`: polls escrow events in 500-block chunks into SQLite; resumes from last block; `/events?jobId=` | survives restart; never requests > 1,000 blocks | todo |
 | T3.3 | `services/watcher`: for each Submitted job with a window, fetch `GET /jobs/{id}/output` from the worker, re-run the job's check (JSON schema + content rules from the job spec), call `challenge` if it fails, before the window ends | test with a bad output gets challenged; good output does not | todo |
 | T3.4 | `services/evaluator`: resolves challenged jobs by re-running the same check; signs `complete`/`reject` with reason hash; logs reasoning to `evaluator.log` | challenged bad job → rejected; challenged good job → completed | todo |
+| T3.6 | Idempotency + retries everywhere (judging: "handles retries, idempotency, async failures"): settle keyed by termsHash, watcher/evaluator safe to restart, exponential backoff on RPC | restart any service mid-demo; no duplicate or lost actions | todo |
 | T3.5 | Worker HTTP template (`services/worker-kit`): 402 quote from chain reads, PAYMENT-SIGNATURE handling via facilitator, acceptJob, output endpoint | curl 402 → sign → 202 with jobId | todo |
 
 ## L4 Agents (DeepSeek builds; Claude writes T4.4 scenarios)
@@ -71,6 +72,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T5.3 | Reputation panel: score, bond rate, credit limit, history | matches chain reads | todo |
 | T5.4 | Receipts: per-tree receipt view + download (JSON and PDF) | receipt lines sum to funded total | todo |
 | T5.5 | Plain-English errors from SDK; challenge-window countdowns | no raw revert strings shown | todo |
+| T5.6 | Controls panel (judging: "easy revocation/approval controls"): AgentAccount sessions list, add/revoke session, freeze; BudgetGuard limits and freeze | revoke takes effect on the next funding attempt | todo |
 
 ## L6 Docs, Docker, verification
 
@@ -80,6 +82,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T6.2 | README draft: problem, architecture, workflows, tech stack, addresses, compiler settings, how to run (DeepSeek drafts, Claude edits) | covers the 4 required doc items | todo |
 | T6.3 | `.env.example`, LICENSE (MIT), NOTICE (DeepSeek) | no secrets in repo | todo |
 | T6.4 | `scripts/verify-bytecode.sh`: rebuild with pinned settings, compare runtime bytecode to `cast code` for each deployed address, masking immutables and metadata (Claude) | passes on every address | todo |
+| T6.6 | README sections the judges name: known assumptions, limitations, roadmap, distribution plan, path to mainnet, API reference | all present | todo |
 | T6.5 | Demo video script and recording checklist (DeepSeek drafts, human records) | video attached on DoraHacks | todo |
 
 ## L7 Red team
