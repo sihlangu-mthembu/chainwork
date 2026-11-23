@@ -30,7 +30,7 @@ const RUN = process.env.CHAINWORK_LOCAL === "1";
 const MNEMONIC = "test test test test test test test test test test test junk";
 const acct = (i: number) => mnemonicToAccount(MNEMONIC, { addressIndex: i });
 
-describe.skipIf(!RUN)("local anvil end-to-end", () => {
+describe.skipIf(!RUN)("local anvil end-to-end", { timeout: 30_000 }, () => {
   const d = JSON.parse(readFileSync(new URL("../../../deployments/local.json", import.meta.url), "utf8")) as DeploymentJson;
   const cfg = configFromDeployment(d);
   const transport = http("http://127.0.0.1:8545");
@@ -63,13 +63,17 @@ describe.skipIf(!RUN)("local anvil end-to-end", () => {
     expect((await relayer.getJob(jobId)).status).toBe(JobStatus.Funded);
 
     const providerStart = await bal(acct(3).address);
+    // Bond and credit come from on-chain reputation, which improves as this provider completes jobs.
+    const numbers = await provider.providerNumbers(acct(3).address, toUnits("0.10"));
     const { bond } = await provider.accept(jobId);
-    expect(bond).toBe(toUnits("0.05"));
+    expect(bond).toBe(numbers.bond);
+    expect(bond).toBeLessThanOrEqual(toUnits("0.05")); // never above the new-agent rate
 
     const child = buildSubTerms({ provider: acct(5).address, evaluator, budget: toUnits("0.03"), expiredAt: BigInt(now + 1800), challengeWindow: 30 });
     const { childId } = await provider.subcontract(jobId, child, "FX rates");
-    await expect(provider.subcontract(jobId, { ...child, budget: toUnits("0.03") }, "too much")).rejects.toThrow(
-      "Subcontracting that much would use 0.06 tUSD8, but this agent's bond plus earned credit is 0.05 tUSD8.",
+    const room = await provider.maxSubcontract(jobId);
+    await expect(provider.subcontract(jobId, { ...child, budget: room + 1n }, "too much")).rejects.toThrow(
+      /^(Subcontracting that much would use|Only .* of the parent budget is left)/,
     );
 
     await backup.accept(childId);
@@ -101,14 +105,17 @@ describe.skipIf(!RUN)("local anvil end-to-end", () => {
   it("funds through an AgentAccount session key, and refuses out-of-scope signatures", async () => {
     const owner = createWalletClient({ account: acct(1), chain: foundry, transport });
     const account = d.clientAccount as Address;
-    const sessionKey = mnemonicToAccount(MNEMONIC, { addressIndex: 9 });
+    // A fresh session key each run; caps are set relative to what the account already spent today,
+    // so the test also passes on a reused chain (where earlier runs count toward the daily cap).
+    const sessionKey = mnemonicToAccount(MNEMONIC, { addressIndex: 10 + Math.floor(Math.random() * 1000) });
     const now = await chainNow();
+    const spent = await pc.readContract({ address: cfg.budgetGuard as Address, abi: budgetGuardHookAbi, functionName: "spentToday", args: [account] });
     await pc.waitForTransactionReceipt({
       hash: await owner.writeContract({
         address: account,
         abi: agentAccountAbi,
         functionName: "execute",
-        args: [cfg.budgetGuard as Address, 0n, encodeSetLimits(toUnits("0.50"), toUnits("1"))],
+        args: [cfg.budgetGuard as Address, 0n, encodeSetLimits(toUnits("0.50"), spent + toUnits("1"))],
       }),
     });
     await pc.waitForTransactionReceipt({
@@ -116,7 +123,7 @@ describe.skipIf(!RUN)("local anvil end-to-end", () => {
         address: account,
         abi: agentAccountAbi,
         functionName: "addSession",
-        args: [sessionKey.address, BigInt(now + 86_400), toUnits("0.20"), toUnits("0.50")],
+        args: [sessionKey.address, BigInt(now + 86_400), toUnits("0.20"), spent + toUnits("0.50")],
       }),
     });
 

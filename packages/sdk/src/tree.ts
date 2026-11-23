@@ -51,7 +51,8 @@ export async function getEscrowLogsChunked(
   toBlock?: bigint,
 ) {
   const chunk = cfg.logChunk ?? 500n;
-  const end = toBlock ?? (await pc.getBlockNumber());
+  // cacheTime 0: viem caches the block number for ~4 s by default, which would miss the latest events.
+  const end = toBlock ?? (await pc.getBlockNumber({ cacheTime: 0 }));
   const out = [];
   for (let start = fromBlock; start <= end; start += chunk) {
     const stop = start + chunk - 1n > end ? end : start + chunk - 1n;
