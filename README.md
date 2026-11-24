@@ -491,7 +491,7 @@ specified in [docs/X402_ESCROW_SCHEME.md](docs/X402_ESCROW_SCHEME.md).
 keystores with a password supplied at runtime; a raw key is accepted only on the local chain for
 tests. CI has no secrets.
 
-**No LLM money tools.** Agents can call escrow functions and nothing else: `get_quote`, `hire`,
+**No LLM money tools.** Agents (planned, T4.1) can call escrow functions and nothing else: `get_quote`, `hire`,
 `subcontract`, `submit`, `read_tree`, `provider_numbers`, `wait`. **No tool takes an arbitrary
 recipient and an amount.** An injected instruction to "pay 1 tUSD8 to 0x…" has no code path to
 execute.
