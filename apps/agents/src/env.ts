@@ -1,6 +1,6 @@
 /** Role accounts and per-role Chainwork clients. Local anvil keys; on Aevum, <ROLE>_PK. */
 import { createWalletClient, http, type WalletClient } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { nonceManager, privateKeyToAccount } from "viem/accounts";
 import { Chainwork, type ChainworkConfig } from "@chainwork/sdk";
 import { loadServiceConfig, type ServiceConfig } from "@chainwork/service-kit";
 import { anvilAccount } from "@chainwork/service-kit/testing";
@@ -22,7 +22,7 @@ export function accountFor(
 ): ReturnType<typeof privateKeyToAccount> | ReturnType<typeof anvilAccount> {
   const envName = `${role.toUpperCase().replace(/-/g, "_")}_PK`;
   const pk = process.env[envName];
-  if (pk) return privateKeyToAccount(pk as `0x${string}`);
+  if (pk) return privateKeyToAccount(pk as `0x${string}`, { nonceManager });
   if (network === "local") {
     const index = ROLE_INDEX[role];
     if (index === undefined) throw new Error(`No local index for role "${role}".`);

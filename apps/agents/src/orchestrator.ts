@@ -400,6 +400,12 @@ export async function runGhosting(base: ServiceConfig, logger: Logger): Promise<
   });
   const sig = await signFunding(client, base.cfg, terms, { validBefore: BigInt(now + 600) });
   const { jobId } = await clientCw.fund(sig, description);
+  const funded = await base.publicClient.readContract({
+    address: base.cfg.token,
+    abi: fiatTokenV2_2Abi,
+    functionName: "balanceOf",
+    args: [client.address],
+  });
   await warp(30);
   await clientFor("deployer", base).claimRefund(jobId);
   const job = await clientCw.getJob(jobId);
@@ -409,11 +415,18 @@ export async function runGhosting(base: ServiceConfig, logger: Logger): Promise<
     functionName: "balanceOf",
     args: [client.address],
   });
-  logger.info("scenario.s3", { jobId: jobId.toString(), status: job.status, refunded: (after - before).toString() });
+  const detail = {
+    jobId: jobId.toString(),
+    status: JobStatus[job.status],
+    paid: (before - funded).toString(),
+    refunded: (after - funded).toString(),
+    net: (after - before).toString(),
+  };
+  logger.info("scenario.s3", detail);
   return {
     scenario: "S3 ghosting refund",
-    ok: job.status === JobStatus.Expired && after === before,
-    detail: { jobId: jobId.toString(), status: JobStatus[job.status], refunded: (after - before).toString() },
+    ok: job.status === JobStatus.Expired && after === before && after > funded,
+    detail,
   };
 }
 

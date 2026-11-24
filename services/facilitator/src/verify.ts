@@ -419,9 +419,14 @@ export async function verifyPayment(input: NormalizedPayment, ctx: VerifyContext
         args: [digest, signature],
       });
       if (magic.toLowerCase() !== "0x1626ba7e") {
+        const frozen = await cw.publicClient
+          .readContract({ address: client, abi: agentAccountAbi, functionName: "frozen" })
+          .catch(() => false);
         return failure(
           "invalid_escrow_signature",
-          "The smart account rejected this signature: the session key is not allowed to fund these exact terms.",
+          frozen
+            ? "The smart account is frozen by its owner (kill switch): it signs nothing until unfrozen."
+            : "The smart account rejected this signature: the session key is not allowed to fund these exact terms.",
           client,
         );
       }

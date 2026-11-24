@@ -17,7 +17,7 @@ import {
   type PublicClient,
   type WalletClient,
 } from "viem";
-import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
+import { generatePrivateKey, nonceManager, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import { AEVUM_TESTNET } from "@chainwork/types";
 import {
@@ -100,7 +100,7 @@ export function loadRelayer(network: NetworkName = networkName()): PrivateKeyAcc
   const pk = process.env.RELAYER_PK;
   if (pk) {
     if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) throw new Error("RELAYER_PK must be a 32-byte hex private key.");
-    return privateKeyToAccount(pk as `0x${string}`);
+    return privateKeyToAccount(pk as `0x${string}`, { nonceManager });
   }
   const keystore = process.env.RELAYER_KEYSTORE;
   const password = process.env.RELAYER_KEYSTORE_PASSWORD ?? process.env.CHAINWORK_KEYSTORE_PASSWORD;
@@ -112,7 +112,7 @@ export function loadRelayer(network: NetworkName = networkName()): PrivateKeyAcc
     const role = process.env.AGENT_ROLE ?? process.env.SERVICE_ROLE ?? "deployer";
     const local = LOCAL_ROLE_KEYS[role];
     if (!local) throw new Error(`No local key for role "${role}". Use one of: ${Object.keys(LOCAL_ROLE_KEYS).join(", ")}.`);
-    return privateKeyToAccount(local);
+    return privateKeyToAccount(local, { nonceManager });
   }
   throw new Error(
     "No relayer key on Aevum. Set RELAYER_KEYSTORE to a local V3 keystore plus RELAYER_KEYSTORE_PASSWORD, or RELAYER_PK from a secrets manager.",

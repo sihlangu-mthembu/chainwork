@@ -6,7 +6,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createPublicClient, createTestClient, http, type PublicClient } from "viem";
-import { mnemonicToAccount } from "viem/accounts";
+import { mnemonicToAccount, nonceManager } from "viem/accounts";
 import { foundry } from "viem/chains";
 
 export const LOCAL_MNEMONIC = "test test test test test test test test test test test junk";
@@ -15,7 +15,8 @@ export const LOCAL_RPC = process.env.RPC_URL ?? "http://127.0.0.1:8545";
 
 /** anvil roles: 0 deployer/relayer, 1 client, 2 coordinator (0 tUSD8), 3 specialist-data, ... 7 evaluator. */
 export function anvilAccount(index: number): ReturnType<typeof mnemonicToAccount> {
-  return mnemonicToAccount(LOCAL_MNEMONIC, { addressIndex: index });
+  // A shared nonce manager: several loops in one process send from the same role concurrently.
+  return mnemonicToAccount(LOCAL_MNEMONIC, { addressIndex: index, nonceManager });
 }
 
 export function localPublicClient(rpcUrl = LOCAL_RPC): PublicClient {

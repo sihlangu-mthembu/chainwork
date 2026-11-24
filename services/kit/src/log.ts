@@ -7,13 +7,15 @@ import { dirname } from "node:path";
 import { jsonSafe } from "./json.js";
 
 export interface Logger {
+  /** Written only when LOG_LEVEL=debug. */
+  debug?(event: string, fields?: Record<string, unknown>): void;
   info(event: string, fields?: Record<string, unknown>): void;
   warn(event: string, fields?: Record<string, unknown>): void;
   error(event: string, fields?: Record<string, unknown>): void;
 }
 
 export function createLogger(service: string, opts: { file?: string } = {}): Logger {
-  const write = (level: "info" | "warn" | "error", event: string, fields?: Record<string, unknown>) => {
+  const write = (level: "debug" | "info" | "warn" | "error", event: string, fields?: Record<string, unknown>) => {
     const line = JSON.stringify(
       jsonSafe({
         t: new Date().toISOString(),
@@ -30,7 +32,11 @@ export function createLogger(service: string, opts: { file?: string } = {}): Log
       appendFileSync(opts.file, `${line}\n`);
     }
   };
+  const debugOn = (process.env.LOG_LEVEL ?? "").toLowerCase() === "debug";
   return {
+    debug: (event, fields) => {
+      if (debugOn) write("debug", event, fields);
+    },
     info: (event, fields) => write("info", event, fields),
     warn: (event, fields) => write("warn", event, fields),
     error: (event, fields) => write("error", event, fields),

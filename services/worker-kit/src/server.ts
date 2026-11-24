@@ -6,7 +6,7 @@
  * The worker never holds the client's money: settlement goes through the facilitator into escrow.
  */
 import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
-import { isAddressEqual, zeroAddress, type Address } from "viem";
+import { isAddressEqual, zeroAddress, zeroHash, type Address } from "viem";
 import type { EscrowPaymentPayload, EscrowSettleResponse } from "@chainwork/types";
 import { JobStatus } from "@chainwork/types";
 import { chainworkEscrowImplAbi } from "@chainwork/types/abis";
@@ -157,9 +157,20 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
         .send({ jobId, status: existing.status, duplicate: true });
     }
 
+    if (running.has(jobId)) {
+      return reply
+        .status(202)
+        .header(PAYMENT_HEADERS.response, base64(settled))
+        .send({ jobId, status: "accepted", duplicate: true });
+    }
+    // Reserve the job before any await so the auto-accept scan can't start it too.
+    let release!: () => void;
+    running.set(jobId, new Promise<void>((r) => (release = r)));
     try {
       const job = await cw.getJob(BigInt(jobId));
       if (!isAddressEqual(job.provider, provider)) {
+        running.delete(jobId);
+        release();
         return reply.status(403).send({ error: `Job ${jobId} is not assigned to this worker.` });
       }
       const ext = await cw.getJobExt(BigInt(jobId));
@@ -167,12 +178,17 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
         await cw.accept(BigInt(jobId));
       }
     } catch (e) {
+      running.delete(jobId);
+      release();
       deps.logger?.error("worker.accept-failed", { jobId, error: e instanceof Error ? e.message : String(e) });
       return reply.status(502).send({ error: `Could not accept job ${jobId}: ${e instanceof Error ? e.message : String(e)}` });
     }
 
     deps.store.setJob(jobId, description, "accepted");
-    const task = runJob(cw, deps, jobId, description, provider).finally(() => running.delete(jobId));
+    const task = runJob(cw, deps, jobId, description, provider).finally(() => {
+      running.delete(jobId);
+      release();
+    });
     running.set(jobId, task);
 
     return reply
@@ -186,7 +202,12 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
     const output = deps.store.output(id);
     if (!output) return reply.status(404).send({ error: "No output for that job yet." });
     // Serve only once the hash is on chain, so readers can always check bytes against the job.
-    if (deps.store.job(id)?.status !== "submitted") {
+    let onChain = deps.store.job(id)?.status === "submitted";
+    if (!onChain && /^\d+$/.test(id)) {
+      const ext = await cw.getJobExt(BigInt(id)).catch(() => undefined);
+      onChain = ext !== undefined && ext.deliverable.toLowerCase() === output.hash.toLowerCase();
+    }
+    if (!onChain) {
       return reply.status(425).header("retry-after", "1").send({ error: "Output is being submitted; try again shortly." });
     }
     return reply
@@ -204,20 +225,32 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
     const scan = async () => {
       try {
         const ids = await assignedFunded(cw, provider);
-        if (ids.length > 0) deps.logger?.info("worker.scan", { provider, jobs: ids.map((id) => id.toString()) });
-        for (const jobId of ids) {
+        const fresh = ids.filter((id) => !running.has(id.toString()) && !DONE.has(deps.store.job(id.toString())?.status ?? ""));
+        if (fresh.length > 0) deps.logger?.debug?.("worker.scan", { provider, jobs: fresh.map((id) => id.toString()) });
+        for (const jobId of fresh) {
+          const key = jobId.toString();
+          // Reserve the job before any await, so an overlapping scan or a paid POST can't start it twice.
+          let release!: () => void;
+          running.set(key, new Promise<void>((r) => (release = r)));
           try {
-            const key = jobId.toString();
-            if (running.has(key)) continue;
             const job = await cw.getJob(jobId);
-            if (job.status !== JobStatus.Funded) continue;
             const ext = await cw.getJobExt(jobId);
+            if (job.status !== JobStatus.Funded || ext.deliverable !== zeroHash) {
+              running.delete(key);
+              release();
+              continue;
+            }
             if (!ext.accepted) await cw.accept(jobId);
             deps.store.setJob(key, job.description, "accepted");
-            const task = runJob(cw, deps, key, job.description, provider).finally(() => running.delete(key));
+            const task = runJob(cw, deps, key, job.description, provider).finally(() => {
+              running.delete(key);
+              release();
+            });
             running.set(key, task);
             deps.logger?.info("worker.auto-accepted", { jobId: key });
           } catch (e) {
+            running.delete(key);
+            release();
             // One expired or already-accepted job must not stop the whole scan.
             deps.logger?.warn("worker.auto-accept-failed", {
               jobId: jobId.toString(),
@@ -236,6 +269,9 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
 
   return app;
 }
+
+/** Worker states after which a job never needs to be started again. */
+const DONE = new Set(["working", "submitted"]);
 
 async function assignedFunded(cw: Chainwork, provider: Address): Promise<bigint[]> {
   const out: bigint[] = [];

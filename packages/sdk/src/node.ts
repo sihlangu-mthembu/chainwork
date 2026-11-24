@@ -9,7 +9,7 @@ import { createDecipheriv, scryptSync, pbkdf2Sync } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { bytesToHex, concatBytes, hexToBytes, keccak256, type Hex } from "viem";
-import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
+import { nonceManager, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 
 interface KeystoreV3 {
   version: number;
@@ -55,5 +55,5 @@ export function loadKeystoreAccount(dir: string, name: string, password: string)
   const candidates = [join(dir, name), join(dir, `${name}.json`)];
   const path = candidates.find((p) => existsSync(p));
   if (!path) throw new Error(`No keystore named "${name}" in ${dir}.`);
-  return privateKeyToAccount(decryptKeystore(readFileSync(path, "utf8"), password));
+  return privateKeyToAccount(decryptKeystore(readFileSync(path, "utf8"), password), { nonceManager });
 }

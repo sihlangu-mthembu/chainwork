@@ -99,6 +99,12 @@ export async function watchOnce(deps: WatcherDeps): Promise<WatchOnceResult> {
     }
 
     const stillLeft = Number(ext.submittedAt) + window - Number((await cw.publicClient.getBlock({ blockTag: "pending" })).timestamp);
+    // An unreachable worker gets the first half of the window to come back before we challenge.
+    if (check.unavailable && stillLeft > Math.max(window / 2, minRemaining)) {
+      logger.warn("watch.unavailable", { jobId: job.id.toString(), remaining: stillLeft, reason: check.reason });
+      result.skipped++;
+      continue;
+    }
     if (stillLeft <= 5) {
       logger.warn("watch.missed-window", { jobId: job.id.toString(), remaining: stillLeft, reason: check.reason });
       result.skipped++;

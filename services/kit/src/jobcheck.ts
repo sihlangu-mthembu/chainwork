@@ -17,6 +17,8 @@ export interface JobCheckSuccess {
 export interface JobCheckFailure {
   ok: false;
   reason: string;
+  /** The worker could not be reached or did not serve its output (as opposed to a wrong output). */
+  unavailable?: boolean;
   output?: string;
   spec?: JobSpec;
 }
@@ -32,9 +34,16 @@ export interface CheckJobDeps {
 }
 
 async function fetchText(url: string, timeoutMs = 5_000): Promise<string> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
-  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-  return res.text();
+  // A worker answers 425 for the second between its submit landing and it recording that: retry.
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    if (res.ok) return res.text();
+    if ((res.status === 425 || res.status === 503) && attempt < 4) {
+      await new Promise((r) => setTimeout(r, 1_000));
+      continue;
+    }
+    throw new Error(`HTTP ${res.status} from ${url}`);
+  }
 }
 
 const outputUrl = (base: string, jobId: bigint): string => `${base.replace(/\/$/, "")}/jobs/${jobId}/output`;
@@ -87,7 +96,11 @@ export async function checkJob(deps: CheckJobDeps, jobId: bigint): Promise<JobCh
   try {
     output = await fetchText(outputUrl(urlFor(job.provider, workerUrls), jobId), deps.timeoutMs);
   } catch (e) {
-    return { ok: false, reason: `The worker did not serve the output: ${e instanceof Error ? e.message : String(e)}` };
+    return {
+      ok: false,
+      unavailable: true,
+      reason: `The worker did not serve the output: ${e instanceof Error ? e.message : String(e)}`,
+    };
   }
 
   const spec = parseJobSpec(job.description);

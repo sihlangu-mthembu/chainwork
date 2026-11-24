@@ -17,6 +17,9 @@ export interface JobRow {
 }
 
 export class WorkerStore {
+  /** After close, writes are dropped and reads miss: a job still finishing during shutdown must not crash the process. */
+  private closed = false;
+
   constructor(readonly db: Db) {
     db.exec(`
       CREATE TABLE IF NOT EXISTS outputs (
@@ -40,26 +43,32 @@ export class WorkerStore {
   }
 
   putOutput(jobId: string, body: string, hash: string): void {
+    if (this.closed) return;
     this.db
       .prepare("INSERT OR REPLACE INTO outputs (job_id, body, hash, created_at) VALUES (?, ?, ?, ?)")
       .run(jobId, body, hash, Math.floor(Date.now() / 1000));
   }
 
   output(jobId: string): StoredOutput | undefined {
+    if (this.closed) return undefined;
     return this.db.prepare("SELECT * FROM outputs WHERE job_id = ?").get(jobId) as StoredOutput | undefined;
   }
 
   setJob(jobId: string, description: string, status: JobRow["status"], error?: string): void {
+    if (this.closed) return;
     this.db
       .prepare("INSERT OR REPLACE INTO jobs (job_id, description, status, error, updated_at) VALUES (?, ?, ?, ?, ?)")
       .run(jobId, description, status, error ?? null, Math.floor(Date.now() / 1000));
   }
 
   job(jobId: string): JobRow | undefined {
+    if (this.closed) return undefined;
     return this.db.prepare("SELECT * FROM jobs WHERE job_id = ?").get(jobId) as JobRow | undefined;
   }
 
   close(): void {
+    if (this.closed) return;
+    this.closed = true;
     this.db.close();
   }
 }
