@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+out
+cache
+broadcast
+.git
+.keys
+**/.env
+**/.env.*
+!.env.example
+**/*.log
+**/*.sqlite
+apps/agents/data
+apps/dashboard/public/deployment.json

@@ -1,0 +1,67 @@
+# Local rehearsal of the whole system: a 1 s-block Shanghai chain, the contracts, the six-scenario
+# demo (facilitator, coordinator and workers, watcher, evaluator run in the demo process), the
+# indexer and the dashboard.
+#
+#   docker compose up --build           # chain + deploy + dashboard + indexer, then the demo runs
+#   open http://localhost:5173          # watch the trees fill in live
+#   docker compose run --rm demo s2     # run one scenario again (seed|s1|s2|s3|s4|s5|all)
+#
+# Everything is local (chain 31337, anvil's public test keys). Nothing here touches Aevum.
+name: chainwork
+
+services:
+  chain:
+    image: ghcr.io/foundry-rs/foundry:stable
+    entrypoint: ["anvil", "--host", "0.0.0.0", "--hardfork", "shanghai", "--block-time", "1", "--silent"]
+    ports: ["8545:8545"]
+    healthcheck:
+      test: ["CMD", "cast", "chain-id", "--rpc-url", "http://127.0.0.1:8545"]
+      interval: 2s
+      retries: 30
+
+  deploy:
+    build: .
+    command: ["forge", "script", "contracts/script/Deploy.s.sol:DeployLocal", "--rpc-url", "http://chain:8545", "--broadcast", "--offline"]
+    volumes: ["deployments:/app/deployments"]
+    depends_on:
+      chain: { condition: service_healthy }
+
+  demo:
+    build: .
+    entrypoint: ["pnpm", "-s", "-F", "agents", "start"]
+    command: ["all"]
+    environment:
+      NETWORK: local
+      RPC_URL: http://chain:8545
+    volumes: ["deployments:/app/deployments"]
+    depends_on:
+      deploy: { condition: service_completed_successfully }
+
+  indexer:
+    build: .
+    command: ["pnpm", "-s", "-F", "indexer", "start"]
+    environment:
+      NETWORK: local
+      RPC_URL: http://chain:8545
+      AGENT_ROLE: deployer
+    volumes: ["deployments:/app/deployments", "indexer-data:/app/services/indexer/data"]
+    depends_on:
+      deploy: { condition: service_completed_successfully }
+
+  dashboard:
+    build: .
+    # The browser reads the chain from the host, so the RPC URL is localhost, not "chain".
+    command: ["sh", "-c", "cp deployments/local.json apps/dashboard/public/deployment.json 2>/dev/null || (mkdir -p apps/dashboard/public && cp deployments/local.json apps/dashboard/public/deployment.json); cd apps/dashboard && exec npx vite --host 0.0.0.0 --port 5173"]
+    environment:
+      VITE_CHAIN_ID: "31337"
+      VITE_RPC_URL: http://localhost:8545
+      VITE_EXPLORER_URL: http://localhost:8545
+      VITE_FROM_BLOCK: "1"
+    ports: ["5173:5173"]
+    volumes: ["deployments:/app/deployments"]
+    depends_on:
+      deploy: { condition: service_completed_successfully }
+
+volumes:
+  deployments:
+  indexer-data:
