@@ -75,6 +75,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T5.5 | Plain-English errors from SDK; challenge-window countdowns | no raw revert strings shown | done (deepseek 0314b6f) |
 | T5.6 | Controls panel (judging: "easy revocation/approval controls"): AgentAccount sessions list, add/revoke session, freeze; BudgetGuard limits and freeze | revoke takes effect on the next funding attempt | done (deepseek d277c5f) |
 | T5.7 | Story-first dashboard: money map (payer → root → subcontract tickets with stamped states), one-paragraph tree story, plain-English on-chain timeline, operator desk in tabs, local-chain mode | readable by a judge with no explanation; live during S2 | done (claude a30ca13) |
+| T5.8 | Dashboard upgrade: night-desk theme, gold money lines with moving coins, replay from on-chain events (keys, deep links), "where every cent went" ledger, hover linking, toasts, copy buttons, agent glyphs, header kill-switch status | replay matches the chain at every step (tests on real S2 events) | done (claude) |
 
 ## L6 Docs, Docker, verification
 

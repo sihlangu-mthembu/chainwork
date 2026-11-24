@@ -399,6 +399,21 @@ pnpm -F dashboard dev:local              # dashboard at http://localhost:5173 ag
 scripts/test-local.sh                    # every package's tests, each on its own fresh chain
 ```
 
+What the dashboard shows, for any job tree:
+
+- **The money map:** client → root job → each hire, as work tickets stamped with their state. Gold
+  lines carry money that moved; dashed red marks a refused hire. Coins run along a line when money
+  moves on it.
+- **Replay:** rebuild the tree step by step from the escrow's own events (<kbd>Space</kbd> play,
+  <kbd>←</kbd>/<kbd>→</kbd> step, <kbd>L</kbd> live, <kbd>[</kbd>/<kbd>]</kbd> other trees).
+  Links like `#job=10&step=14` open one moment, for write-ups and reviews.
+- **Where every cent went:** the client's payment split by final recipient, checked to add up, with
+  slashed bonds and challenge stakes listed separately.
+- **What happened:** every on-chain step in plain English with its transaction, linked to the map on
+  hover. Toasts call out challenges, refusals, settlements and new trees as they happen.
+- **Safety in view:** the header always shows whether the client account is frozen and how much of
+  today's cap is spent; one click opens the kill switches.
+
 The chain needs real 1-second blocks (`anvil --block-time 1`): challenge windows close on block
 time, and an automining chain that nobody mines never closes them.
 

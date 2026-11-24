@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useBlockNumber } from "wagmi";
 import { activeChain } from "../wagmi";
+import { SafetyChip } from "./SafetyChip";
 import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { AEVUM_TESTNET } from "@chainwork/types";
 import { aevumAddChainParams, isUnrecognizedChain } from "../lib/addChain";
@@ -25,7 +26,7 @@ function injectedProvider(): Eip1193Provider | null {
 
 type AddState = "idle" | "adding" | "added" | "failed";
 
-export function Header() {
+export function Header({ onOpenControls }: { onOpenControls?(): void } = {}) {
   const { address, isConnected, connector } = useAccount();
   const { connectAsync, connectors, isPending: connecting } = useConnect();
   const { disconnect } = useDisconnect();
@@ -94,11 +95,17 @@ export function Header() {
   return (
     <header className="topbar">
       <div className="brand">
+        <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true">
+          <rect x="2" y="7" width="13" height="14" rx="3" fill="none" stroke="#e8edf5" strokeWidth="2" />
+          <rect x="13" y="7" width="13" height="14" rx="3" fill="none" stroke="#e6b450" strokeWidth="2" />
+          <circle cx="14" cy="14" r="2.2" fill="#e6b450" />
+        </svg>
         <span className="brand-name">Chainwork</span>
         <span className="brand-line">Escrow for AI agents that hire other agents</span>
       </div>
 
       <div className="topbar-actions">
+        {onOpenControls ? <SafetyChip onOpen={onOpenControls} /> : null}
         <span className="netstat" title={activeChain.rpcUrls.default.http[0]}>
           <span className={block !== undefined ? "netstat-dot is-live" : "netstat-dot"} aria-hidden="true" />
           {activeChain.name}

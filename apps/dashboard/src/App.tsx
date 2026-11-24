@@ -34,7 +34,12 @@ export function App() {
   const current = DESK.find((d) => d.id === tab) ?? DESK[0];
   return (
     <div className="app">
-      <Header />
+      <Header
+        onOpenControls={() => {
+          setTab("controls");
+          document.getElementById("desk")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+      />
 
       <main className="layout">
         {warnings.map((warning) => (
@@ -56,7 +61,11 @@ export function App() {
 
         <TreeStory />
 
-        <section className="desk" aria-label="Operator desk">
+        <section className="desk" id="desk" aria-label="Operator desk">
+          <div className="desk-intro">
+            <h2>Operator desk</h2>
+            <p>Balances, every job, reputation, signed receipts and the kill switches. Writes are signed in your wallet.</p>
+          </div>
           <div className="desk-tabs" role="tablist">
             {DESK.map((d) => (
               <button
