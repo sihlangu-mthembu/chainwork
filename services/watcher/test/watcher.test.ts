@@ -136,6 +136,17 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("watcher and evaluator on the local chai
     expect(result.challenged).toBe(0);
     expect((await watcherCw.getJobExt(jobId)).challenged).toBe(false);
     expect(watcherStore.get(jobId.toString())?.verdict).toBe("ok");
+
+    // Restart-safety: a second pass must not re-check or challenge the same deliverable.
+    const again = await watchOnce({
+      config: watcherConfig,
+      cw: watcherCw,
+      store: watcherStore,
+      logger,
+      workerUrls: workerUrls(),
+    });
+    expect(again.challenged).toBe(0);
+    expect(again.skipped).toBeGreaterThanOrEqual(1);
   });
 
   it("challenges a dataset that does not match the chain, and the evaluator rejects it", async () => {
@@ -178,6 +189,15 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("watcher and evaluator on the local chai
     });
     expect(resolved.rejected).toBeGreaterThanOrEqual(1);
     expect((await evaluatorCw.getJob(jobId)).status).toBe(JobStatus.Rejected);
+
+    const again = await resolveOnce({
+      config: evaluatorConfig,
+      cw: evaluatorCw,
+      store: evaluatorStore,
+      logger,
+      workerUrls: workerUrls(),
+    });
+    expect(again.resolved).toBe(0);
   });
 
   it("completes a challenged good job", async () => {

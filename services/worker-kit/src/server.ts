@@ -9,7 +9,7 @@ import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import { isAddressEqual, zeroAddress, type Address } from "viem";
 import type { EscrowPaymentPayload, EscrowSettleResponse } from "@chainwork/types";
 import { JobStatus } from "@chainwork/types";
-import { chainworkFor, postJson, type Logger, type ServiceConfig } from "@chainwork/service-kit";
+import { chainworkFor, postJson, retry, type Logger, type ServiceConfig } from "@chainwork/service-kit";
 import { buildEscrowQuote, toUnits } from "@chainwork/service-kit";
 import { hashText } from "@chainwork/checks";
 import type { Chainwork } from "@chainwork/sdk";
@@ -55,10 +55,14 @@ const cors = (reply: FastifyReply): FastifyReply =>
 
 const defaultSettle = (config: ServiceConfig): SettleFn => (payload) => {
   if (!config.cfg.facilitatorUrl) throw new Error("No facilitator URL configured (FACILITATOR_URL).");
-  return postJson<EscrowSettleResponse & { errorMessage?: string }>(
-    `${config.cfg.facilitatorUrl}/escrow/fund`,
-    payload,
-    { timeoutMs: 60_000 },
+  // Retries are safe: the facilitator is idempotent per terms hash.
+  return retry(
+    "facilitator settle",
+    () =>
+      postJson<EscrowSettleResponse & { errorMessage?: string }>(`${config.cfg.facilitatorUrl}/escrow/fund`, payload, {
+        timeoutMs: 60_000,
+      }),
+    { attempts: 4, baseMs: 500 },
   );
 };
 

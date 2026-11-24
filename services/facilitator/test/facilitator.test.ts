@@ -38,6 +38,7 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("facilitator on the local chain", () => 
   let cw: Chainwork;
   let app: FastifyInstance;
   let store: SettlementStore;
+  let dbPath: string;
   const pc = localPublicClient();
   const client = anvilAccount(1);
   const coordinator = anvilAccount(2); // deliberately 0 tUSD8
@@ -45,8 +46,8 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("facilitator on the local chain", () => 
   const backup = anvilAccount(5);
   const evaluator = anvilAccount(7);
 
-  const post = async (url: string, body: unknown) => {
-    const res = await app.inject({
+  const postTo = async (target: FastifyInstance, url: string, body: unknown) => {
+    const res = await target.inject({
       method: "POST",
       url,
       headers: { "content-type": "application/json" },
@@ -54,6 +55,7 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("facilitator on the local chain", () => 
     });
     return debug(url, res.json() as Record<string, unknown>);
   };
+  const post = (url: string, body: unknown) => postTo(app, url, body);
 
   const debug = (url: string, body: Record<string, unknown>) => {
     if (process.env.FAC_LOG) console.log(url, JSON.stringify(body));
@@ -94,7 +96,8 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("facilitator on the local chain", () => 
     process.env.NETWORK = "local";
     config = loadServiceConfig();
     cw = chainworkFor(config);
-    store = SettlementStore.open(join(tempDir("chainwork-facilitator-"), "settle.sqlite"));
+    dbPath = join(tempDir("chainwork-facilitator-"), "settle.sqlite");
+    store = SettlementStore.open(dbPath);
     app = buildApp({ config, store });
     await app.ready();
   });
@@ -193,6 +196,25 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("facilitator on the local chain", () => 
     const replay = await post("/verify", { paymentPayload: payload, paymentRequirements: requirements });
     expect(replay.isValid).toBe(false);
     expect(replay.invalidCode).toBe("invalid_escrow_nonce_used");
+  });
+
+  it("replays a settled job after a restart", async () => {
+    const { requirements, payload } = await quoteAndSign({ description: "Restart replay", budget: toUnits("0.01") });
+    const first = await post("/settle", { paymentPayload: payload, paymentRequirements: requirements });
+    expect(first.success).toBe(true);
+
+    const store2 = SettlementStore.open(dbPath);
+    const app2 = buildApp({ config, store: store2 });
+    await app2.ready();
+    try {
+      const replay = await postTo(app2, "/settle", { paymentPayload: payload, paymentRequirements: requirements });
+      expect(replay.success).toBe(true);
+      expect(replay.jobId).toBe(first.jobId);
+      expect(replay.alreadySettled).toBe(true);
+    } finally {
+      await app2.close();
+      store2.close();
+    }
   });
 
   it("funds from a bare payload on /escrow/fund", async () => {

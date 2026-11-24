@@ -4,6 +4,7 @@
  * the index safe against a one-block reorg, and (tx_hash, log_index) is unique so nothing duplicates.
  */
 import { decodeEventLog, type PublicClient } from "viem";
+import { withRetry } from "@chainwork/sdk";
 import { chainworkEscrowImplAbi, reputationRegistryImplAbi } from "@chainwork/types/abis";
 import { jsonSafe } from "@chainwork/service-kit";
 import type { Logger, ServiceConfig } from "@chainwork/service-kit";
@@ -37,7 +38,7 @@ export async function indexOnce(deps: IndexDeps): Promise<IndexPass> {
   const reputation = deps.config.cfg.reputation.toLowerCase();
   const deploymentBlock = BigInt(deps.config.deployment.deployedAtBlock ?? 0);
 
-  const latest = await pc.getBlockNumber({ cacheTime: 0 });
+  const latest = await withRetry(() => pc.getBlockNumber({ cacheTime: 0 }));
   const cursor = deps.store.cursor();
   let start = cursor === 0n ? deploymentBlock : cursor + 1n;
   if (cursor > 0n) {
@@ -52,11 +53,13 @@ export async function indexOnce(deps: IndexDeps): Promise<IndexPass> {
   let from = start;
   while (from <= latest) {
     const to = min(from + BigInt(chunk) - 1n, latest);
-    const logs = await pc.getLogs({
-      address: [deps.config.cfg.escrow, deps.config.cfg.reputation],
-      fromBlock: from,
-      toBlock: to,
-    });
+    const logs = await withRetry(() =>
+      pc.getLogs({
+        address: [deps.config.cfg.escrow, deps.config.cfg.reputation],
+        fromBlock: from,
+        toBlock: to,
+      }),
+    );
     const rows: NewEvent[] = [];
     for (const log of logs) {
       const address = log.address.toLowerCase();

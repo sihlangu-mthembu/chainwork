@@ -50,7 +50,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T3.2 | `services/indexer`: polls escrow events in 500-block chunks into SQLite; resumes from last block; `/events?jobId=` | survives restart; never requests > 1,000 blocks | done (deepseek) |
 | T3.3 | `services/watcher`: for each Submitted job with a window, fetch `GET /jobs/{id}/output` from the worker, re-run the job's check (JSON schema + content rules from the job spec), call `challenge` if it fails, before the window ends | test with a bad output gets challenged; good output does not | done (deepseek) |
 | T3.4 | `services/evaluator`: resolves challenged jobs by re-running the same check; signs `complete`/`reject` with reason hash; logs reasoning to `evaluator.log` | challenged bad job → rejected; challenged good job → completed | done (deepseek) |
-| T3.6 | Idempotency + retries everywhere (judging: "handles retries, idempotency, async failures"): settle keyed by termsHash, watcher/evaluator safe to restart, exponential backoff on RPC | restart any service mid-demo; no duplicate or lost actions | todo |
+| T3.6 | Idempotency + retries everywhere (judging: "handles retries, idempotency, async failures"): settle keyed by termsHash, watcher/evaluator safe to restart, exponential backoff on RPC | restart any service mid-demo; no duplicate or lost actions | done (deepseek) |
 | T3.5 | Worker HTTP template (`services/worker-kit`): 402 quote from chain reads, PAYMENT-SIGNATURE handling via facilitator, acceptJob, output endpoint | curl 402 → sign → 202 with jobId | done (deepseek) |
 
 ## L4 Agents (DeepSeek builds; Claude writes T4.4 scenarios)
