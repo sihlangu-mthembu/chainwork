@@ -16,6 +16,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@chainwork/checks": "workspace:*",
     "@chainwork/sdk": "workspace:*",
     "@chainwork/types": "workspace:*",
     "viem": "^2.21.0"

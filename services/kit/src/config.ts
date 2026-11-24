@@ -125,6 +125,15 @@ export function localRoleAddress(role: string): `0x${string}` {
   return privateKeyToAccount(pk).address;
 }
 
+/** Parse WORKER_URLS: {"0xprovider":"http://host:port"} into a lowercase-keyed map. */
+export function parseWorkerUrls(raw: string | undefined = process.env.WORKER_URLS): Record<string, string> {
+  if (!raw) return {};
+  const parsed = JSON.parse(raw) as Record<string, string>;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed)) out[k.toLowerCase()] = v.replace(/\/$/, "");
+  return out;
+}
+
 export interface LoadConfigOptions {
   /** Skip loading a relayer (read-only services such as the indexer). */
   readOnly?: boolean;
