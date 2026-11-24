@@ -7,6 +7,7 @@ import { forwardRef } from "react";
 import type { JobNode, UiJobState } from "@chainwork/types";
 import { formatMoney } from "../lib/format";
 import { challengeDeadline, secondsLeft } from "../lib/state";
+import { Glyph } from "./bits";
 
 export const STAMP_TEXT: Record<UiJobState, string> = {
   Quoted: "Quoted",
@@ -64,27 +65,46 @@ interface TicketProps {
   now: number;
   selected: boolean;
   root?: boolean;
+  /** Highlighted from elsewhere (a hovered timeline entry). */
+  lit?: boolean;
+  /** Something else is highlighted: fade back. */
+  dim?: boolean;
   onSelect(): void;
+  onHover?(on: boolean): void;
 }
 
 export const Ticket = forwardRef<HTMLButtonElement, TicketProps>(function Ticket(
-  { node, holder, now, selected, root = false, onSelect },
+  { node, holder, now, selected, root = false, lit = false, dim = false, onSelect, onHover },
   ref,
 ) {
   const deadline = challengeDeadline(node.ext.submittedAt, node.ext.challengeWindow);
   const left = deadline === null ? null : secondsLeft(deadline, now);
   const inWindow = left !== null && left > 0 && (node.ui === "Submitted" || node.ui === "Challenged");
-  const cls = ["ticket", root ? "ticket-root" : "", selected ? "is-selected" : "", `ticket-${inkFor(node.ui)}`]
+  const cls = ["ticket", "ticket-enter", root ? "ticket-root" : "", selected ? "is-selected" : "", lit ? "is-lit" : "", dim ? "is-dim" : "", `ticket-${inkFor(node.ui)}`]
     .filter(Boolean)
     .join(" ");
   return (
-    <button ref={ref} type="button" className={cls} onClick={onSelect} aria-pressed={selected}>
+    <button
+      ref={ref}
+      type="button"
+      className={cls}
+      onClick={onSelect}
+      onMouseEnter={() => onHover?.(true)}
+      onMouseLeave={() => onHover?.(false)}
+      onFocus={() => onHover?.(true)}
+      onBlur={() => onHover?.(false)}
+      aria-pressed={selected}
+      aria-label={`Job ${node.job.id.toString()}, ${jobTitle(node.job.description)}, ${holder}, ${STAMP_TEXT[node.ui]}`}
+    >
       <span className="ticket-stub">
         <span className="ticket-no">#{node.job.id.toString()}</span>
       </span>
       <span className="ticket-body">
         <span className="ticket-title">{jobTitle(node.job.description)}</span>
-        <span className="ticket-holder">{holder}</span>
+        <span className="ticket-holder">
+          <Glyph address={node.job.provider} name={holder} size={18} />
+          {holder}
+        </span>
         <span className="ticket-money">
           <span className="amount">{formatMoney(node.job.budget)}</span> tUSD8
           {node.ext.bond > 0n ? <span className="ticket-bond"> bond {formatMoney(node.ext.bond)}</span> : null}
