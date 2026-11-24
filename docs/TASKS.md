@@ -40,6 +40,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T2.3 | readTree(rootId) via eth_call only → `JobNode`; UI state mapping; receipt builder with 500-block log chunks | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.4 | Plain-English error decoding for every custom error and FiatToken revert string | `pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.5 | `packages/sdk/scripts/gate1.ts` (fund → accept → submit → finalize, explorer links) and `fund-wallets.ts` (split deployer funds; coordinator gets gas only). Both pass on the local chain. **Aevum run waits on testnet funds** | `NETWORK=aevum pnpm -F @chainwork/sdk gate1` prints GATE 1 PASSED | blocked (testnet funds) |
+| T2.6 | SDK wrapper for the escrow read view `getJobsPage(cursor, limit)` returning jobs, exts and nextCursor (the dashboard calls the view directly today; T5.2 needs the wrapper so paging logic lives in L2) | `pnpm -F @chainwork/sdk typecheck`; dashboard imports the wrapper instead of `readJobsPage` | requested |
 
 ## L3 Services (DeepSeek)
 
@@ -67,12 +68,12 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T5.1 | Vite + React + wagmi + viem; one-click add Aevum (EIP-3085); wallets panel with live balances | loads on mobile and desktop | todo |
-| T5.2 | Live job tree from read views (no getLogs): nodes with UiJobState, money on edges, explorer links per tx | updates within 2 s of a block | todo |
-| T5.3 | Reputation panel: score, bond rate, credit limit, history | matches chain reads | todo |
-| T5.4 | Receipts: per-tree receipt view + download (JSON and PDF) | receipt lines sum to funded total | todo |
-| T5.5 | Plain-English errors from SDK; challenge-window countdowns | no raw revert strings shown | todo |
-| T5.6 | Controls panel (judging: "easy revocation/approval controls"): AgentAccount sessions list, add/revoke session, freeze; BudgetGuard limits and freeze | revoke takes effect on the next funding attempt | todo |
+| T5.1 | Vite + React + wagmi + viem; one-click add Aevum (EIP-3085); wallets panel with live balances | loads on mobile and desktop | done (deepseek 6669da9) |
+| T5.2 | Live job tree from read views (no getLogs): nodes with UiJobState, money on edges, explorer links per tx | updates within 2 s of a block | done (deepseek 2eb1efe) |
+| T5.3 | Reputation panel: score, bond rate, credit limit, history | matches chain reads | done (deepseek 418162c) |
+| T5.4 | Receipts: per-tree receipt view + download (JSON and PDF) | receipt lines sum to funded total | done (deepseek 9806369) |
+| T5.5 | Plain-English errors from SDK; challenge-window countdowns | no raw revert strings shown | done (deepseek 0314b6f) |
+| T5.6 | Controls panel (judging: "easy revocation/approval controls"): AgentAccount sessions list, add/revoke session, freeze; BudgetGuard limits and freeze | revoke takes effect on the next funding attempt | done (deepseek d277c5f) |
 
 ## L6 Docs, Docker, verification
 
