@@ -519,7 +519,7 @@ scan.
 **Money invariants.** I1–I7 in [interfaces/IChainworkEscrow.sol](interfaces/IChainworkEscrow.sol) are
 asserted by the invariant suite ([contracts/test/invariant/Invariants.t.sol](contracts/test/invariant/Invariants.t.sol))
 and by the tests listed in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Reentrancy is guarded on
-every state-changing escrow function; verifiers are `view`; the escrow has no owner, no upgrade path
+every state-changing escrow function; verifiers are read-only (`view` per `IVerifier`, `pure` in `HashVerifier`); the escrow has no owner, no upgrade path
 and no fee switch.
 
 **Threat model.** 21 threats, each mapped to a test, plus assumptions and the red-team log:
