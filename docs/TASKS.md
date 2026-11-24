@@ -40,50 +40,52 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T2.3 | readTree(rootId) via eth_call only → `JobNode`; UI state mapping; receipt builder with 500-block log chunks | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.4 | Plain-English error decoding for every custom error and FiatToken revert string | `pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.5 | `packages/sdk/scripts/gate1.ts` (fund → accept → submit → finalize, explorer links) and `fund-wallets.ts` (split deployer funds; coordinator gets gas only). Both pass on the local chain. **Aevum run waits on testnet funds** | `NETWORK=aevum pnpm -F @chainwork/sdk gate1` prints GATE 1 PASSED | blocked (testnet funds) |
+| T2.6 | SDK wrapper for the escrow read view `getJobsPage(cursor, limit)` returning jobs, exts and nextCursor (the dashboard calls the view directly today; T5.2 needs the wrapper so paging logic lives in L2) | `pnpm -F @chainwork/sdk typecheck`; dashboard imports the wrapper instead of `readJobsPage` | requested |
 
 ## L3 Services (DeepSeek)
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T3.0 | Check x402 v2 header and field names against the official spec; record differences in `docs/X402_ESCROW_SCHEME.md` via an `L0:` PR | PR opened | todo |
-| T3.1 | `services/facilitator`: Fastify + viem; `/supported`, `/verify`, `/settle`, `/escrow/fund`, `/jobs/:id` exactly per the scheme spec; relayer key from env; plain-English `invalidReason` | `pnpm -F facilitator test` (verify rejects tampered terms, wrong payTo, used nonce, low balance) | todo |
-| T3.2 | `services/indexer`: polls escrow events in 500-block chunks into SQLite; resumes from last block; `/events?jobId=` | survives restart; never requests > 1,000 blocks | todo |
-| T3.3 | `services/watcher`: for each Submitted job with a window, fetch `GET /jobs/{id}/output` from the worker, re-run the job's check (JSON schema + content rules from the job spec), call `challenge` if it fails, before the window ends | test with a bad output gets challenged; good output does not | todo |
-| T3.4 | `services/evaluator`: resolves challenged jobs by re-running the same check; signs `complete`/`reject` with reason hash; logs reasoning to `evaluator.log` | challenged bad job → rejected; challenged good job → completed | todo |
-| T3.6 | Idempotency + retries everywhere (judging: "handles retries, idempotency, async failures"): settle keyed by termsHash, watcher/evaluator safe to restart, exponential backoff on RPC | restart any service mid-demo; no duplicate or lost actions | todo |
-| T3.5 | Worker HTTP template (`services/worker-kit`): 402 quote from chain reads, PAYMENT-SIGNATURE handling via facilitator, acceptJob, output endpoint | curl 402 → sign → 202 with jobId | todo |
+| T3.0 | Check x402 v2 header and field names against the official spec; record differences in `docs/X402_ESCROW_SCHEME.md` via an `L0:` PR | PR opened | blocked (gh unauthenticated; L0 change committed on branch `l0/x402-v2-conformance`) |
+| T3.1 | `services/facilitator`: Fastify + viem; `/supported`, `/verify`, `/settle`, `/escrow/fund`, `/jobs/:id` exactly per the scheme spec; relayer key from env; plain-English `invalidReason` | `pnpm -F facilitator test` (verify rejects tampered terms, wrong payTo, used nonce, low balance) | done (deepseek) |
+| T3.2 | `services/indexer`: polls escrow events in 500-block chunks into SQLite; resumes from last block; `/events?jobId=` | survives restart; never requests > 1,000 blocks | done (deepseek) |
+| T3.3 | `services/watcher`: for each Submitted job with a window, fetch `GET /jobs/{id}/output` from the worker, re-run the job's check (JSON schema + content rules from the job spec), call `challenge` if it fails, before the window ends | test with a bad output gets challenged; good output does not | done (deepseek) |
+| T3.4 | `services/evaluator`: resolves challenged jobs by re-running the same check; signs `complete`/`reject` with reason hash; logs reasoning to `evaluator.log` | challenged bad job → rejected; challenged good job → completed | done (deepseek) |
+| T3.6 | Idempotency + retries everywhere (judging: "handles retries, idempotency, async failures"): settle keyed by termsHash, watcher/evaluator safe to restart, exponential backoff on RPC | restart any service mid-demo; no duplicate or lost actions | done (deepseek) |
+| T3.5 | Worker HTTP template (`services/worker-kit`): 402 quote from chain reads, PAYMENT-SIGNATURE handling via facilitator, acceptJob, output endpoint | curl 402 → sign → 202 with jobId | done (deepseek) |
 
 ## L4 Agents (DeepSeek builds; Claude writes T4.4 scenarios)
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T4.1 | Agent runtime: LLM tool-calling loop where the only money tools are SDK calls; deterministic replay mode (record/replay LLM decisions, real chain txs) | `pnpm -F agents test` | todo |
-| T4.2 | Roles: client, coordinator (subcontracts, assembles, submits Merkle root), specialist-data, specialist-bad (returns invalid output), backup | each role runs alone against anvil | todo |
-| T4.3 | `demo:seed`: real past jobs that give the coordinator a proven reputation (bond 0, credit ≥ 0.10) | `reputation.bondBps(coordinator) == 0` on chain | todo |
+| T4.1 | Agent runtime: LLM tool-calling loop where the only money tools are SDK calls; deterministic replay mode (record/replay LLM decisions, real chain txs) | `pnpm -F agents test` | done (deepseek 7fe2cec; claude f1dba59: nonce manager, shutdown safety) |
+| T4.2 | Roles: client, coordinator (subcontracts, assembles, submits Merkle root), specialist-data, specialist-bad (returns invalid output), backup | each role runs alone against anvil | done (deepseek 7fe2cec; claude f1dba59: worker starts each job once) |
+| T4.3 | `demo:seed`: real past jobs that give the coordinator a proven reputation (bond 0, credit ≥ 0.10) | `reputation.bondBps(coordinator) == 0` on chain | done (deepseek 7fe2cec) — S0 passes in CI |
 | T4.4 | Failure scenarios and demo task definition (Claude): `docs/DEMO_SCENARIOS.md` (S0 seed, S1 zero-capital tree, S2 challenge + re-hire, S3 ghosting refund, S4 prompt injection, S5 kill switch; canonical JSON + metrics function) | spec merged | done (claude) |
-| T4.5 | `demo:all` and `demo:reset` | **G2**: full tree on Aevum in < 3 min | todo |
+| T4.5 | `demo:all` and `demo:reset` | **G2**: full tree on Aevum in < 3 min | done locally: S0–S5 pass on a fresh chain in CI (`demo` job). G2 on Aevum waits on deployment |
 
 ## L5 Dashboard (DeepSeek)
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T5.1 | Vite + React + wagmi + viem; one-click add Aevum (EIP-3085); wallets panel with live balances | loads on mobile and desktop | todo |
-| T5.2 | Live job tree from read views (no getLogs): nodes with UiJobState, money on edges, explorer links per tx | updates within 2 s of a block | todo |
-| T5.3 | Reputation panel: score, bond rate, credit limit, history | matches chain reads | todo |
-| T5.4 | Receipts: per-tree receipt view + download (JSON and PDF) | receipt lines sum to funded total | todo |
-| T5.5 | Plain-English errors from SDK; challenge-window countdowns | no raw revert strings shown | todo |
-| T5.6 | Controls panel (judging: "easy revocation/approval controls"): AgentAccount sessions list, add/revoke session, freeze; BudgetGuard limits and freeze | revoke takes effect on the next funding attempt | todo |
+| T5.1 | Vite + React + wagmi + viem; one-click add Aevum (EIP-3085); wallets panel with live balances | loads on mobile and desktop | done (deepseek 6669da9) |
+| T5.2 | Live job tree from read views (no getLogs): nodes with UiJobState, money on edges, explorer links per tx | updates within 2 s of a block | done (deepseek 2eb1efe) |
+| T5.3 | Reputation panel: score, bond rate, credit limit, history | matches chain reads | done (deepseek 418162c) |
+| T5.4 | Receipts: per-tree receipt view + download (JSON and PDF) | receipt lines sum to funded total | done (deepseek 9806369) |
+| T5.5 | Plain-English errors from SDK; challenge-window countdowns | no raw revert strings shown | done (deepseek 0314b6f) |
+| T5.6 | Controls panel (judging: "easy revocation/approval controls"): AgentAccount sessions list, add/revoke session, freeze; BudgetGuard limits and freeze | revoke takes effect on the next funding attempt | done (deepseek d277c5f) |
+| T5.7 | Story-first dashboard: money map (payer → root → subcontract tickets with stamped states), one-paragraph tree story, plain-English on-chain timeline, operator desk in tabs, local-chain mode | readable by a judge with no explanation; live during S2 | done (claude a30ca13) |
 
 ## L6 Docs, Docker, verification
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T6.1 | `docker-compose.yml`: facilitator, indexer, watcher, evaluator, dashboard, agents (DeepSeek) | clean clone → `docker compose up` works | todo |
-| T6.2 | README draft: problem, architecture, workflows, tech stack, addresses, compiler settings, how to run (DeepSeek drafts, Claude edits) | covers the 4 required doc items | todo |
-| T6.3 | `.env.example`, LICENSE (MIT), NOTICE (DeepSeek) | no secrets in repo | todo |
+| T6.1 | `Dockerfile` + `docker-compose.yml`: chain (anvil, 1 s blocks), deploy, demo (facilitator, workers, watcher, evaluator in-process), indexer, dashboard | clean clone → `docker compose up` works | done (claude) — CI `compose` job runs it from a clean clone |
+| T6.2 | README draft: problem, architecture, workflows, tech stack, addresses, compiler settings, how to run (DeepSeek drafts, Claude edits). Also wrote `docs/ARCHITECTURE.md` (component boundaries + where I1–I7 are enforced/tested) | covers the 4 required doc items | done (deepseek, 7b24806 + f196042 + c01beaa + e6cf390) |
+| T6.3 | `.env.example`, LICENSE (MIT), NOTICE (DeepSeek). `.env.example` groups chain/deployment, relayer, facilitator, operator scripts, planned services (`WORKER_*`), agents and `VITE_*`; placeholders only | no secrets in repo | done (deepseek, c67cf4a + b26abb7) |
 | T6.4 | `scripts/verify-bytecode.sh`: rebuild with pinned settings, compare runtime bytecode to `cast code`, masking only compiler-listed immutables (metadata hash kept, so it proves the exact source) (Claude) | passes on local deployment in CI; fails on swapped addresses | done (claude) |
 | T6.6 | README sections the judges name: known assumptions, limitations, roadmap, distribution plan, path to mainnet, API reference | all present | todo |
-| T6.5 | Demo video script and recording checklist (DeepSeek drafts, human records) | video attached on DoraHacks | todo |
+| T6.5 | Demo video script and recording checklist (DeepSeek drafts, human records) | video attached on DoraHacks | done (deepseek, 63f73f9; recording is human, still open) |
 
 ## L0 Spec (Claude)
 

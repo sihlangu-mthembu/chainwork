@@ -47,3 +47,80 @@ jobs:
         run: CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test
       - name: Deployed bytecode == source
         run: scripts/verify-bytecode.sh deployments/local.json http://127.0.0.1:8545
+
+  workspace:
+    name: services, agents, dashboard (fresh chain per package)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: forge build >/dev/null
+      - name: Typecheck everything
+        run: pnpm -r typecheck
+      - name: Tests (each package on its own anvil, 1 s blocks)
+        run: scripts/test-local.sh
+      - name: Dashboard production build
+        run: pnpm -F dashboard build
+
+  demo:
+    name: demo scenarios S0-S5 end to end
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: forge build >/dev/null
+      - name: Run every scenario on a fresh chain
+        run: set -o pipefail; scripts/demo-local.sh all | tee demo.log
+      - name: Summary
+        if: always()
+        run: grep -E "^(PASS|FAIL)" demo.log >> "$GITHUB_STEP_SUMMARY" || true
+
+  compose:
+    name: docker compose up (clean clone)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build images
+        run: docker compose build
+      - name: Chain + deploy, then every scenario (exits non-zero if any fails)
+        run: set -o pipefail; docker compose run --rm demo all | tee demo.log
+      - name: Dashboard and indexer come up
+        run: |
+          docker compose up -d dashboard indexer
+          for i in $(seq 60); do curl -fsS http://localhost:5173/ >/dev/null && break; sleep 2; done
+          curl -fsS http://localhost:5173/ | grep -q '<div id="root">'
+          docker compose ps
+      - name: Summary
+        if: always()
+        run: |
+          grep -E "^(PASS|FAIL)" demo.log >> "$GITHUB_STEP_SUMMARY" || true
+          docker compose logs --tail 40 indexer dashboard || true
+          docker compose down -v || true
