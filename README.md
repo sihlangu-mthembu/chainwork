@@ -115,19 +115,19 @@ Three properties make this a business model rather than a demo trick:
 | x402 `escrow` facilitator | [services/facilitator/](services/facilitator/) | Implemented (T3.1), tests against the local chain |
 | Shared service kit (config, keystore relayer, SQLite, retries, quotes) | [services/kit/](services/kit/) | Implemented (T3.1 groundwork) |
 | Bytecode verification | [scripts/verify-bytecode.sh](scripts/verify-bytecode.sh) | Implemented (T6.4) |
-| Indexer (event pages → SQLite) | `services/indexer` | **Planned** (T3.2) |
-| Watcher (re-check submissions, challenge) | `services/watcher` | **Planned** (T3.3) |
-| Evaluator (resolve challenged jobs) | `services/evaluator` | **Planned** (T3.4) |
-| Worker HTTP kit (402 quote → accept → output endpoint) | `services/worker-kit` | **Planned** (T3.5) |
-| Agents (client, coordinator, specialists, backup) and demo scripts | `apps/agents` | **Planned** (T4.1–T4.5) |
-| Dashboard (job tree, reputation, receipts, kill switch) | `apps/dashboard` | **Planned** (T5.1–T5.6) |
-| `docker compose up` | `docker-compose.yml` | **Planned** (T6.1) |
+| Indexer (event pages → SQLite, 500-block chunks, restart-safe cursor) | [services/indexer/](services/indexer/) | Implemented (T3.2) |
+| Watcher (re-check submissions, challenge inside the window) | [services/watcher/](services/watcher/) | Implemented (T3.3) |
+| Evaluator (resolve challenged jobs with the shared job check) | [services/evaluator/](services/evaluator/) | Implemented (T3.4) |
+| Worker HTTP kit (402 quote → accept → output endpoint) | [services/worker-kit/](services/worker-kit/) | Implemented (T3.5) |
+| Agents (client, coordinator, specialists, backup) and the six demo scenarios | [apps/agents/](apps/agents/) | Implemented (T4.1–T4.5); S0–S5 pass end to end in CI |
+| Dashboard (job-tree story and money map, timeline, reputation, receipts, kill switches) | [apps/dashboard/](apps/dashboard/) | Implemented (T5.1–T5.7) |
+| `docker compose up` | [docker-compose.yml](docker-compose.yml) | Implemented (T6.1), run from a clean clone in CI |
 
-Rows marked **Planned** name a folder or script that does **not exist in this tree yet**; they are
-listed so the target structure is unambiguous. A task is only `done` on [docs/TASKS.md](docs/TASKS.md)
-when its acceptance command has passed.
+A task is only `done` on [docs/TASKS.md](docs/TASKS.md) when its acceptance command has passed.
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) builds with the pinned compiler, runs the
-contract suites, deploys to a local anvil, runs the SDK suites and re-verifies deployed bytecode.
+contract suites, deploys to a local anvil, runs the SDK suites, re-verifies deployed bytecode, runs
+every service, agent and dashboard suite on its own fresh chain, plays all six demo scenarios end to
+end, and brings the whole system up with `docker compose` from a clean clone.
 
 ## Architecture
 
@@ -381,18 +381,35 @@ It needs a deployment file, an RPC and a relayer key (`RELAYER_KEYSTORE` +
 `RELAYER_KEYSTORE_PASSWORD`, or `RELAYER_PK`; on `NETWORK=local` it falls back to anvil account 0).
 Every variable is listed with a placeholder in [.env.example](.env.example).
 
-### 6. Services, dashboard, agents and Docker — planned
+### 6. The whole system: demo, dashboard, Docker
 
-`services/indexer`, `services/watcher`, `services/evaluator`, `services/worker-kit`,
-`apps/agents`, `apps/dashboard` and `docker-compose.yml` are **not in this tree yet**
-(T3.2–T3.5, T4.x, T5.x, T6.1). When they land, the intended entry points are:
+One command, from a clean clone (Docker only):
 
 ```bash
-pnpm demo:seed     # S0: give the coordinator a real track record (planned, T4.3)
-pnpm demo:all      # the whole tree on the configured chain (planned, T4.5)
-pnpm demo:reset    # reset local state (planned, T4.5)
-docker compose up  # facilitator + services + dashboard + agents (planned, T6.1)
+docker compose up --build    # 1 s-block chain, contracts, indexer, dashboard, then all six scenarios
+# open http://localhost:5173 and watch the job trees fill in
+docker compose run --rm demo s2   # replay one scenario: seed | s1 | s2 | s3 | s4 | s5 | all
 ```
+
+Without Docker (needs Foundry and pnpm):
+
+```bash
+KEEP_CHAIN=1 scripts/demo-local.sh all   # fresh anvil (--block-time 1) + deploy + S0–S5
+pnpm -F dashboard dev:local              # dashboard at http://localhost:5173 against that chain
+scripts/test-local.sh                    # every package's tests, each on its own fresh chain
+```
+
+The chain needs real 1-second blocks (`anvil --block-time 1`): challenge windows close on block
+time, and an automining chain that nobody mines never closes them.
+
+| Scenario | What it proves |
+|---|---|
+| S0 seed | The coordinator earns a track record, so it needs no bond and gets credit |
+| S1 zero-capital tree | A client pays once; the coordinator hires two agents out of that escrow with 0 tUSD8 of its own; everyone is paid on delivery |
+| S2 bad worker | The watcher challenges a wrong output, the evaluator rejects it, the bond is slashed, a backup is re-hired from the refunded budget |
+| S3 ghosting | A job nobody delivers expires and the client gets every cent back |
+| S4 prompt injection | A quote that asks to pay anyone but the escrow is refused by the SDK, the agent tool and the smart account |
+| S5 kill switch | The owner freezes the client's smart account; the next funding attempt fails with a plain-English reason |
 
 ### 7. Prove deployed bytecode is this source
 
@@ -547,9 +564,10 @@ Stated so a reviewer can disagree with them explicitly:
 
 ## Limitations
 
-- **Not implemented yet in this tree:** indexer, watcher, evaluator, worker kit, agents, dashboard,
-  Docker Compose (T3.2–T3.5, T4.x, T5.x, T6.1). Until the watcher and evaluator exist, the challenge
-  path can only be driven by hand through the SDK.
+- **The demo runs without a model by default.** The agent runtime takes an OpenAI-compatible model
+  (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`, e.g. DeepSeek) or replays a recorded trace, so every
+  scenario is reproducible offline. Either way a model only chooses among escrow tools; money never
+  moves on a model's decision (verifier, window or evaluator only).
 - **No Aevum addresses yet:** `deployments/aevum.json` does not exist; the Aevum deployment waits on
   testnet funds. Only the local anvil addresses above are real today.
 - **No source verification on the explorer** (reportedly unsupported); we ship
@@ -562,8 +580,6 @@ Stated so a reviewer can disagree with them explicitly:
 - **Depth 1, ≤ 4 open and ≤ 8 total children per parent**, page size ≤ 100: deliberate bounds that
   keep gas and invariants simple, not a scalability claim.
 - **No fee model.** Platform and evaluator fees are 0 in this version; there is no revenue switch.
-- **Dashboard, agents and Docker are specified elsewhere** in the task board; treat their behaviour
-  in this README as intent, not as shipped code.
 - **English-only, Windows-and-Linux operator docs**; the Aevum runbook assumes PowerShell because
   that is where the keystores live today.
 

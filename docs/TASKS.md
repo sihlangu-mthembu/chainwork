@@ -58,11 +58,11 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T4.1 | Agent runtime: LLM tool-calling loop where the only money tools are SDK calls; deterministic replay mode (record/replay LLM decisions, real chain txs) | `pnpm -F agents test` | todo |
-| T4.2 | Roles: client, coordinator (subcontracts, assembles, submits Merkle root), specialist-data, specialist-bad (returns invalid output), backup | each role runs alone against anvil | todo |
-| T4.3 | `demo:seed`: real past jobs that give the coordinator a proven reputation (bond 0, credit ≥ 0.10) | `reputation.bondBps(coordinator) == 0` on chain | todo |
+| T4.1 | Agent runtime: LLM tool-calling loop where the only money tools are SDK calls; deterministic replay mode (record/replay LLM decisions, real chain txs) | `pnpm -F agents test` | done (deepseek 7fe2cec; claude f1dba59: nonce manager, shutdown safety) |
+| T4.2 | Roles: client, coordinator (subcontracts, assembles, submits Merkle root), specialist-data, specialist-bad (returns invalid output), backup | each role runs alone against anvil | done (deepseek 7fe2cec; claude f1dba59: worker starts each job once) |
+| T4.3 | `demo:seed`: real past jobs that give the coordinator a proven reputation (bond 0, credit ≥ 0.10) | `reputation.bondBps(coordinator) == 0` on chain | done (deepseek 7fe2cec) — S0 passes in CI |
 | T4.4 | Failure scenarios and demo task definition (Claude): `docs/DEMO_SCENARIOS.md` (S0 seed, S1 zero-capital tree, S2 challenge + re-hire, S3 ghosting refund, S4 prompt injection, S5 kill switch; canonical JSON + metrics function) | spec merged | done (claude) |
-| T4.5 | `demo:all` and `demo:reset` | **G2**: full tree on Aevum in < 3 min | todo |
+| T4.5 | `demo:all` and `demo:reset` | **G2**: full tree on Aevum in < 3 min | done locally: S0–S5 pass on a fresh chain in CI (`demo` job). G2 on Aevum waits on deployment |
 
 ## L5 Dashboard (DeepSeek)
 
@@ -74,12 +74,13 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T5.4 | Receipts: per-tree receipt view + download (JSON and PDF) | receipt lines sum to funded total | done (deepseek 9806369) |
 | T5.5 | Plain-English errors from SDK; challenge-window countdowns | no raw revert strings shown | done (deepseek 0314b6f) |
 | T5.6 | Controls panel (judging: "easy revocation/approval controls"): AgentAccount sessions list, add/revoke session, freeze; BudgetGuard limits and freeze | revoke takes effect on the next funding attempt | done (deepseek d277c5f) |
+| T5.7 | Story-first dashboard: money map (payer → root → subcontract tickets with stamped states), one-paragraph tree story, plain-English on-chain timeline, operator desk in tabs, local-chain mode | readable by a judge with no explanation; live during S2 | done (claude a30ca13) |
 
 ## L6 Docs, Docker, verification
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T6.1 | `docker-compose.yml`: facilitator, indexer, watcher, evaluator, dashboard, agents (DeepSeek). Not started: `docker-compose.yml` is not in this docs worktree; it needs the services to exist first (T3.2–T3.5, T5.x) | clean clone → `docker compose up` works | todo (deepseek) |
+| T6.1 | `Dockerfile` + `docker-compose.yml`: chain (anvil, 1 s blocks), deploy, demo (facilitator, workers, watcher, evaluator in-process), indexer, dashboard | clean clone → `docker compose up` works | done (claude) — CI `compose` job runs it from a clean clone |
 | T6.2 | README draft: problem, architecture, workflows, tech stack, addresses, compiler settings, how to run (DeepSeek drafts, Claude edits). Also wrote `docs/ARCHITECTURE.md` (component boundaries + where I1–I7 are enforced/tested) | covers the 4 required doc items | done (deepseek, 7b24806 + f196042 + c01beaa + e6cf390) |
 | T6.3 | `.env.example`, LICENSE (MIT), NOTICE (DeepSeek). `.env.example` groups chain/deployment, relayer, facilitator, operator scripts, planned services (`WORKER_*`), agents and `VITE_*`; placeholders only | no secrets in repo | done (deepseek, c67cf4a + b26abb7) |
 | T6.4 | `scripts/verify-bytecode.sh`: rebuild with pinned settings, compare runtime bytecode to `cast code`, masking only compiler-listed immutables (metadata hash kept, so it proves the exact source) (Claude) | passes on local deployment in CI; fails on swapped addresses | done (claude) |
