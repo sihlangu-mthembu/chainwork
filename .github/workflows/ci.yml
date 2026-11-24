@@ -108,5 +108,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build and run chain + deploy + demo
-        run: docker compose up --build --exit-code-from demo chain deploy demo
+      - name: Build images
+        run: docker compose build
+      - name: Chain + deploy, then every scenario (exits non-zero if any fails)
+        run: docker compose run --rm demo all | tee demo.log
+      - name: Dashboard and indexer come up
+        run: |
+          docker compose up -d dashboard indexer
+          for i in $(seq 60); do curl -fsS http://localhost:5173/ >/dev/null && break; sleep 2; done
+          curl -fsS http://localhost:5173/ | grep -q '<div id="root">'
+          docker compose ps
+      - name: Summary
+        if: always()
+        run: |
+          grep -E "^(PASS|FAIL)" demo.log >> "$GITHUB_STEP_SUMMARY" || true
+          docker compose logs --tail 40 indexer dashboard || true
+          docker compose down -v || true
