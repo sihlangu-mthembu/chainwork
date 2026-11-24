@@ -5,7 +5,13 @@
   "description": "x402 escrow facilitator: verify and settle Chainwork job funding on Aevum.",
   "license": "MIT",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "src/app.ts",
+  "types": "src/app.ts",
+  "exports": {
+    ".": "./src/app.ts",
+    "./store": "./src/settle.ts",
+    "./verify": "./src/verify.ts"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",

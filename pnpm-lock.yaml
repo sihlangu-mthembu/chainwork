@@ -8,6 +8,52 @@ importers:
 
   .: {}
 
+  apps/agents:
+    dependencies:
+      '@chainwork/checks':
+        specifier: workspace:*
+        version: link:../../services/checks
+      '@chainwork/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@chainwork/service-kit':
+        specifier: workspace:*
+        version: link:../../services/kit
+      '@chainwork/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      evaluator:
+        specifier: workspace:*
+        version: link:../../services/evaluator
+      facilitator:
+        specifier: workspace:*
+        version: link:../../services/facilitator
+      fastify:
+        specifier: ^5.2.0
+        version: 5.12.8
+      viem:
+        specifier: ^2.21.0
+        version: 2.58.4(typescript@5.9.3)
+      watcher:
+        specifier: workspace:*
+        version: link:../../services/watcher
+      worker-kit:
+        specifier: workspace:*
+        version: link:../../services/worker-kit
+    devDependencies:
+      '@types/node':
+        specifier: '22'
+        version: 22.20.5
+      tsx:
+        specifier: '4'
+        version: 4.23.15
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.5)
+
   packages/sdk:
     dependencies:
       '@chainwork/types':

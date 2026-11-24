@@ -2,7 +2,7 @@
   "budgetGuard": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
   "chainId": 31337,
   "clientAccount": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-  "deployedAtBlock": 0,
+  "deployedAtBlock": 3,
   "escrow": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
   "hashVerifier": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
   "reputation": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",

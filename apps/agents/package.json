@@ -1,0 +1,40 @@
+{
+  "name": "agents",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chainwork demo agents: LLM tool loop, replay mode, and scenarios S0-S5.",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/cli.ts",
+    "demo:seed": "tsx src/cli.ts seed",
+    "demo:all": "tsx src/cli.ts all",
+    "demo:reset": "tsx src/cli.ts reset",
+    "scenario:s1": "tsx src/cli.ts s1",
+    "scenario:s2": "tsx src/cli.ts s2",
+    "scenario:s3": "tsx src/cli.ts s3",
+    "scenario:s4": "tsx src/cli.ts s4",
+    "scenario:s5": "tsx src/cli.ts s5",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@chainwork/checks": "workspace:*",
+    "@chainwork/sdk": "workspace:*",
+    "@chainwork/service-kit": "workspace:*",
+    "@chainwork/types": "workspace:*",
+    "evaluator": "workspace:*",
+    "facilitator": "workspace:*",
+    "fastify": "^5.2.0",
+    "viem": "^2.21.0",
+    "watcher": "workspace:*",
+    "worker-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22",
+    "tsx": "4",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

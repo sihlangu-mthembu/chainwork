@@ -9,6 +9,7 @@ import {
   canonicalJson,
   fetchTransfers,
   hashText,
+  jobSpecDescription,
   metricsFor,
   parseJobSpec,
   type Dataset,
@@ -16,10 +17,10 @@ import {
   type Metrics,
 } from "@chainwork/checks";
 import { JobStatus } from "@chainwork/types";
-import type { Chainwork, ChainworkConfig } from "@chainwork/sdk";
+import { buildSubTerms, toUnits, type Chainwork, type ChainworkConfig } from "@chainwork/sdk";
 import type { Logger, ServiceConfig } from "@chainwork/service-kit";
 
-export type WorkKind = "dataset" | "metrics" | "pack" | "echo";
+export type WorkKind = "dataset" | "metrics" | "pack" | "coordinator" | "echo";
 
 export interface WorkJob {
   jobId: bigint;
@@ -40,6 +41,8 @@ export interface WorkDeps {
   /** Make metrics wrong on purpose (specialist-bad in scenario S2). */
   bad?: boolean;
   summary?: string;
+  /** Coordinator only: who to subcontract the two children to. */
+  specialists?: { data?: Address; metrics?: Address; fallback?: Address };
   pollMs?: number;
   timeoutMs?: number;
 }
@@ -120,8 +123,9 @@ const bestMetricsChild = (children: ChildJob[]): ChildJob | undefined => {
 export function makeWork(deps: WorkDeps): WorkFn {
   if (deps.kind === "dataset") return (job) => datasetWork(job, deps);
   if (deps.kind === "metrics") return (job) => metricsWork(job, deps);
-  if (deps.kind === "echo") return async (job) => canonicalJson({ jobId: job.jobId.toString(), v: 1 });
-  return (job) => packWork(job, deps);
+  if (deps.kind === "pack") return (job) => packWork(job, deps);
+  if (deps.kind === "coordinator") return (job) => coordinatorWork(job, deps);
+  return async (job) => canonicalJson({ jobId: job.jobId.toString(), v: 1 });
 }
 
 async function datasetWork(job: WorkJob, deps: WorkDeps): Promise<string> {
@@ -166,6 +170,106 @@ async function metricsWork(job: WorkJob, deps: WorkDeps): Promise<string> {
   }
   deps.logger?.info("work.metrics", { jobId: job.jobId.toString(), bad: deps.bad === true });
   return canonicalJson(metrics);
+}
+
+/**
+ * Coordinator: carve the two children out of the root's escrowed budget, wait for them to settle,
+ * then assemble the pack. In S2 the first metrics worker is specialist-bad; once its child is
+ * rejected the coordinator hires the backup and waits again.
+ */
+async function coordinatorWork(job: WorkJob, deps: WorkDeps): Promise<string> {
+  const spec = parseJobSpec(job.description);
+  if (!spec || spec.kind !== "pack") throw new Error("The coordinator only handles pack jobs.");
+  const root = await deps.cw.getJob(job.jobId);
+  const specialists = deps.specialists ?? {};
+  if (!specialists.data || !specialists.metrics) throw new Error("Set the specialist provider addresses for the coordinator.");
+
+  const childExpiry = root.expiredAt - 60n;
+  const latest = Number(await deps.config.publicClient.getBlockNumber({ cacheTime: 0 }));
+  const existing = await childrenOf(deps.cw, job.jobId);
+  if (existing.length === 0) {
+    const datasetSpec = {
+      v: 1,
+      kind: "dataset",
+      subject: spec.subject,
+      token: deps.config.cfg.token,
+      fromBlock: 0,
+      toBlock: latest,
+    } as const;
+    await deps.cw.subcontract(
+      job.jobId,
+      buildSubTerms({
+        provider: specialists.data,
+        evaluator: root.evaluator,
+        budget: toUnits("0.03"),
+        expiredAt: childExpiry,
+        challengeWindow: 30,
+      }),
+      jobSpecDescription(datasetSpec),
+    );
+    await deps.cw.subcontract(
+      job.jobId,
+      buildSubTerms({
+        provider: specialists.metrics,
+        evaluator: root.evaluator,
+        budget: toUnits("0.04"),
+        expiredAt: childExpiry,
+        challengeWindow: 30,
+      }),
+      jobSpecDescription({ v: 1, kind: "metrics", subject: spec.subject }),
+    );
+    deps.logger?.info("coordinator.subcontracted", { root: job.jobId.toString(), data: specialists.data, metrics: specialists.metrics });
+  }
+
+  const deadline = Date.now() + (deps.timeoutMs ?? 180_000);
+  let fallbackHired = false;
+  for (;;) {
+    const children = await childrenOf(deps.cw, job.jobId);
+    const dataset = datasetChild(children);
+    const completedMetrics = children.filter((c) => c.spec.kind === "metrics" && c.status === JobStatus.Completed);
+    const rejectedMetrics = children.some((c) => c.spec.kind === "metrics" && c.status === JobStatus.Rejected);
+    if (dataset && dataset.status === JobStatus.Completed && completedMetrics.length > 0) break;
+    if (rejectedMetrics && specialists.fallback && !fallbackHired) {
+      await deps.cw.subcontract(
+        job.jobId,
+        buildSubTerms({
+          provider: specialists.fallback,
+          evaluator: root.evaluator,
+          budget: toUnits("0.04"),
+          expiredAt: childExpiry,
+          challengeWindow: 30,
+        }),
+        jobSpecDescription({ v: 1, kind: "metrics", subject: spec.subject }),
+      );
+      fallbackHired = true;
+      deps.logger?.warn("coordinator.rehired", { root: job.jobId.toString(), fallback: specialists.fallback });
+    }
+    if (Date.now() > deadline) throw new Error("Timed out waiting for the children to settle.");
+    await sleep(deps.pollMs ?? 2_000);
+  }
+
+  const children = await childrenOf(deps.cw, job.jobId);
+  const dataset = datasetChild(children);
+  const metrics = bestMetricsChild(children);
+  if (!dataset || !metrics) throw new Error("The root needs a completed dataset and metrics child.");
+  const [datasetText, metricsText, childrenRoot] = await Promise.all([
+    outputOf(dataset, deps),
+    outputOf(metrics, deps),
+    deps.cw.childrenRoot(job.jobId),
+  ]);
+  const metricsJson = JSON.parse(metricsText) as Metrics;
+  const summary =
+    deps.summary ??
+    `Due diligence for ${spec.subject}: ${metricsJson.count} transfers, inflow ${metricsJson.inflow}, outflow ${metricsJson.outflow}, ${metricsJson.counterparties} counterparties.`;
+  return canonicalJson(
+    buildPack({
+      subject: spec.subject,
+      childrenRoot,
+      datasetHash: hashText(datasetText),
+      metricsHash: hashText(metricsText),
+      summary,
+    }),
+  );
 }
 
 async function packWork(job: WorkJob, deps: WorkDeps): Promise<string> {

@@ -13,7 +13,7 @@ const defaults: Record<string, { kind: WorkKind; price: string; port: number; ba
   "specialist-data": { kind: "dataset", price: "0.03", port: 4101 },
   "specialist-bad": { kind: "metrics", price: "0.04", port: 4102, bad: true },
   backup: { kind: "metrics", price: "0.04", port: 4103 },
-  coordinator: { kind: "pack", price: "0.10", port: 4100 },
+  coordinator: { kind: "coordinator", price: "0.10", port: 4100 },
   seed: { kind: "echo", price: "0.01", port: 4104 },
 };
 const plan = defaults[role];
@@ -30,16 +30,31 @@ const price = BigInt(process.env.PRICE_UNITS ?? toUnits(plan.price).toString());
 const dataDir = resolve(process.env.DATA_DIR ?? "data");
 const store = WorkerStore.open(resolve(dataDir, `worker-${role}.sqlite`));
 const workerUrls = parseWorkerUrls(process.env.WORKER_URLS);
+const local = (role: string) => (config.network === "local" ? localRoleAddress(role) : undefined);
+const specialists = {
+  data: (process.env.SPECIALIST_DATA as `0x${string}` | undefined) ?? local("specialist-data"),
+  metrics: (process.env.SPECIALIST_METRICS as `0x${string}` | undefined) ?? local("specialist-bad"),
+  fallback: (process.env.SPECIALIST_FALLBACK as `0x${string}` | undefined) ?? local("backup"),
+};
 
 const app = buildWorkerApp({
   config,
   store,
-  work: makeWork({ kind: plan.kind, cw: chainworkFor(config), config, logger, workerUrls, bad: plan.bad }),
+  work: makeWork({
+    kind: plan.kind,
+    cw: chainworkFor(config),
+    config,
+    logger,
+    workerUrls,
+    bad: plan.bad,
+    specialists,
+  }),
   kind: plan.kind,
   price,
   evaluator,
   publicUrl,
   logger,
+  autoAccept: process.env.AUTO_ACCEPT === "1",
 });
 
 const shutdown = async (signal: string) => {

@@ -9,6 +9,7 @@ import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import { isAddressEqual, zeroAddress, type Address } from "viem";
 import type { EscrowPaymentPayload, EscrowSettleResponse } from "@chainwork/types";
 import { JobStatus } from "@chainwork/types";
+import { chainworkEscrowImplAbi } from "@chainwork/types/abis";
 import { chainworkFor, postJson, retry, type Logger, type ServiceConfig } from "@chainwork/service-kit";
 import { buildEscrowQuote, toUnits } from "@chainwork/service-kit";
 import { hashText } from "@chainwork/checks";
@@ -40,6 +41,8 @@ export interface WorkerAppDeps {
   challengeWindow?: number;
   expiresIn?: number;
   logger?: Logger;
+  /** Pick up Funded jobs assigned to this provider on chain (how subcontracted agents get work). */
+  autoAccept?: boolean;
   /** Injectable for tests; defaults to POST {facilitator}/escrow/fund. */
   settle?: SettleFn;
 }
@@ -193,7 +196,68 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
     return deps.store.job(id) ?? { jobId: id, status: "unknown" };
   });
 
+  if (deps.autoAccept) {
+    const scan = async () => {
+      try {
+        const ids = await assignedFunded(cw, provider);
+        if (ids.length > 0) deps.logger?.info("worker.scan", { provider, jobs: ids.map((id) => id.toString()) });
+        for (const jobId of ids) {
+          try {
+            const key = jobId.toString();
+            if (running.has(key)) continue;
+            const job = await cw.getJob(jobId);
+            if (job.status !== JobStatus.Funded) continue;
+            const ext = await cw.getJobExt(jobId);
+            if (!ext.accepted) await cw.accept(jobId);
+            deps.store.setJob(key, job.description, "accepted");
+            const task = runJob(cw, deps, key, job.description, provider).finally(() => running.delete(key));
+            running.set(key, task);
+            deps.logger?.info("worker.auto-accepted", { jobId: key });
+          } catch (e) {
+            // One expired or already-accepted job must not stop the whole scan.
+            deps.logger?.warn("worker.auto-accept-failed", {
+              jobId: jobId.toString(),
+              error: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+      } catch (e) {
+        deps.logger?.warn("worker.auto-accept-error", { error: e instanceof Error ? e.message : String(e) });
+      }
+    };
+    const timer = setInterval(() => void scan(), 2_500);
+    app.addHook("onClose", async () => clearInterval(timer));
+    void scan();
+  }
+
   return app;
+}
+
+async function assignedFunded(cw: Chainwork, provider: Address): Promise<bigint[]> {
+  const out: bigint[] = [];
+  let cursor = 1n;
+  const now = Number((await cw.publicClient.getBlock({ blockTag: "pending" })).timestamp);
+  for (let page = 0; page < 100; page++) {
+    const [jobs, , next] = (await cw.publicClient.readContract({
+      address: cw.cfg.escrow,
+      abi: chainworkEscrowImplAbi,
+      functionName: "getJobsPage",
+      args: [cursor, 100n],
+    })) as unknown as [
+      Array<{ id: bigint; status: JobStatus; provider: Address; expiredAt: bigint }>,
+      unknown[],
+      bigint,
+    ];
+    for (const job of jobs) {
+      if (job.status !== JobStatus.Funded || !isAddressEqual(job.provider, provider)) continue;
+      // Expired jobs can no longer be accepted; leave them to claimRefund.
+      if (job.expiredAt <= BigInt(now)) continue;
+      out.push(job.id);
+    }
+    if (next === 0n) break;
+    cursor = next;
+  }
+  return out;
 }
 
 async function runJob(
