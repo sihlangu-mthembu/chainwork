@@ -93,8 +93,8 @@ Total: 240 s. Cuts are hard cuts; no fades.
 | | |
 |---|---|
 | **On screen** | Dashboard **Jobs**: a child job labelled `Accepted` with a deadline countdown. Terminal: `cast` or the SDK call. |
-| **Do** | 1. Show the accepted-not-delivered child. 2. Let the deadline pass (or use the recorded run). 3. Call `claimRefund(jobId)` from the **watcher** wallet — a third party, not the client. 4. Show the refund line landing back in the root's pool and the bond going to the coordinator. |
-| **Say** | "Anyone can refund an expired job: no admin, no hook, no support ticket. The budget returns to the parent pool and the ghosting provider loses its bond." |
+| **Do** | 1. Show the accepted-not-delivered child. 2. Let the deadline pass (or use the recorded run). 3. Call `claimRefund(jobId)` from the **watcher** wallet — a third party, not the client. 4. Show `ChildBudgetReturned` and `BondSlashed` in the log: the child's allocation is back on the parent (`maxSubcontract` grows again) and the ghosting provider's bond lands in the coordinator's wallet. No token refund leaves the escrow for a child — the budget was never moved out. |
+| **Say** | "Anyone can refund an expired job: no admin, no hook, no support ticket. The child's budget goes back to the parent's pool, and the ghosting provider loses its bond." |
 
 ### 2:10–2:35 — S4: prompt injection inside the data
 
