@@ -39,7 +39,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T2.2 | fund (direct or via facilitator), accept (permit), subcontract, submit, submitParent, submitWithProof, challenge, finalize, settleTree; retries on transient RPC errors | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.3 | readTree(rootId) via eth_call only → `JobNode`; UI state mapping; receipt builder with 500-block log chunks | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.4 | Plain-English error decoding for every custom error and FiatToken revert string | `pnpm -F @chainwork/sdk test` | done (claude) |
-| T2.5 | `scripts/gate1.ts`: fund → accept → submit → finalize on Aevum (run by human) | **G1** | todo |
+| T2.5 | `packages/sdk/scripts/gate1.ts` (fund → accept → submit → finalize, explorer links) and `fund-wallets.ts` (split deployer funds; coordinator gets gas only). Both pass on the local chain. **Aevum run waits on testnet funds** | `NETWORK=aevum pnpm -F @chainwork/sdk gate1` prints GATE 1 PASSED | blocked (testnet funds) |
 
 ## L3 Services (DeepSeek)
 
