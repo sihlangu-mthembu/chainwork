@@ -1,0 +1,28 @@
+{
+  "name": "facilitator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "x402 escrow facilitator: verify and settle Chainwork job funding on Aevum.",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@chainwork/sdk": "workspace:*",
+    "@chainwork/service-kit": "workspace:*",
+    "@chainwork/types": "workspace:*",
+    "fastify": "^5.2.0",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "22",
+    "tsx": "4",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

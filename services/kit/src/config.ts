@@ -1,0 +1,149 @@
+/**
+ * One place that turns environment variables into a chain + relayer + deployment for a service.
+ *
+ * Keys are never written to disk or committed: on Aevum the relayer comes from an encrypted V3
+ * keystore (RELAYER_KEYSTORE + RELAYER_KEYSTORE_PASSWORD) or, for local development only, from the
+ * well-known anvil mnemonic. See docs/RUNBOOK.md.
+ */
+import { readFileSync } from "node:fs";
+import { basename, dirname, isAbsolute, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  http,
+  type Chain,
+  type PublicClient,
+  type WalletClient,
+} from "viem";
+import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
+import { foundry } from "viem/chains";
+import { AEVUM_TESTNET } from "@chainwork/types";
+import {
+  Chainwork,
+  configFromDeployment,
+  type ChainworkConfig,
+  type DeploymentJson,
+} from "@chainwork/sdk";
+import { loadKeystoreAccount } from "@chainwork/sdk/node";
+
+export type NetworkName = "local" | "aevum";
+
+export interface ServiceConfig {
+  network: NetworkName;
+  chain: Chain;
+  rpcUrl: string;
+  cfg: ChainworkConfig;
+  deployment: DeploymentJson;
+  publicClient: PublicClient;
+  relayer: PrivateKeyAccount;
+  wallet: WalletClient;
+  /** Explorer link for a tx, or the hash itself on the local chain. */
+  explorerTx(txHash: string): string;
+  explorerAddress(address: string): string;
+}
+
+/** Aevum testnet as a viem chain. Chain facts come from @chainwork/types, never invented here. */
+export const aevum = defineChain({
+  id: AEVUM_TESTNET.id,
+  name: AEVUM_TESTNET.name,
+  nativeCurrency: AEVUM_TESTNET.nativeCurrency,
+  rpcUrls: { default: { http: [AEVUM_TESTNET.rpcUrl] } },
+  blockExplorers: { default: { name: "Aevum Explorer", url: AEVUM_TESTNET.explorerUrl } },
+});
+
+/** anvil account 0 (deployer/relayer). Local development only. */
+const LOCAL_RELAYER_PK = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" as const;
+
+export function networkName(): NetworkName {
+  const n = process.env.NETWORK ?? "local";
+  if (n !== "local" && n !== "aevum") throw new Error(`NETWORK must be "local" or "aevum", not "${n}".`);
+  return n;
+}
+
+export function deploymentPath(network: NetworkName): string {
+  const override = process.env.DEPLOYMENT;
+  if (override) return isAbsolute(override) ? override : resolve(process.cwd(), override);
+  return fileURLToPath(new URL(`../../../deployments/${network}.json`, import.meta.url));
+}
+
+export function readDeployment(network: NetworkName = networkName()): DeploymentJson {
+  const path = deploymentPath(network);
+  try {
+    return JSON.parse(readFileSync(path, "utf8")) as DeploymentJson;
+  } catch (e) {
+    throw new Error(
+      `Cannot read deployment file ${path}. Run the DeployLocal / DeployAevum script first (see docs/RUNBOOK.md).`,
+      { cause: e },
+    );
+  }
+}
+
+/**
+ * Load the relayer key. Priority: RELAYER_PK (hex, e.g. from a secrets manager) →
+ * RELAYER_KEYSTORE + password → anvil account 0 when NETWORK=local.
+ */
+export function loadRelayer(network: NetworkName = networkName()): PrivateKeyAccount {
+  const pk = process.env.RELAYER_PK;
+  if (pk) {
+    if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) throw new Error("RELAYER_PK must be a 32-byte hex private key.");
+    return privateKeyToAccount(pk as `0x${string}`);
+  }
+  const keystore = process.env.RELAYER_KEYSTORE;
+  const password = process.env.RELAYER_KEYSTORE_PASSWORD ?? process.env.CHAINWORK_KEYSTORE_PASSWORD;
+  if (keystore) {
+    if (!password) throw new Error("Set RELAYER_KEYSTORE_PASSWORD (or CHAINWORK_KEYSTORE_PASSWORD) to unlock the relayer keystore.");
+    return loadKeystoreAccount(dirname(keystore), basename(keystore), password);
+  }
+  if (network === "local") return privateKeyToAccount(LOCAL_RELAYER_PK);
+  throw new Error(
+    "No relayer key on Aevum. Set RELAYER_KEYSTORE to a local V3 keystore plus RELAYER_KEYSTORE_PASSWORD, or RELAYER_PK from a secrets manager.",
+  );
+}
+
+export interface LoadConfigOptions {
+  /** Skip loading a relayer (read-only services such as the indexer). */
+  readOnly?: boolean;
+}
+
+export function loadServiceConfig(opts: LoadConfigOptions = {}): ServiceConfig {
+  const network = networkName();
+  const chain = network === "aevum" ? aevum : foundry;
+  const rpcUrl =
+    process.env.RPC_URL ?? (network === "aevum" ? AEVUM_TESTNET.rpcUrl : "http://127.0.0.1:8545");
+  const deployment = readDeployment(network);
+  if (deployment.chainId !== chain.id) {
+    throw new Error(
+      `deployments/${network}.json is for chain ${deployment.chainId}, but NETWORK=${network} expects ${chain.id}.`,
+    );
+  }
+  const cfg = configFromDeployment(deployment, { facilitatorUrl: process.env.FACILITATOR_URL });
+  const transport = http(rpcUrl, { retryCount: 3, timeout: 20_000 });
+  const publicClient = createPublicClient({ chain, transport });
+
+  // Read-only services never sign; give them a throwaway address so no real key is loaded.
+  const relayer = opts.readOnly ? privateKeyToAccount(generatePrivateKey()) : loadRelayer(network);
+  const wallet = createWalletClient({ account: relayer, chain, transport });
+
+  const explorer = (path: "tx" | "address", value: string) =>
+    network === "aevum" ? `${AEVUM_TESTNET.explorerUrl}/${path}/${value}` : value;
+
+  return {
+    network,
+    chain,
+    rpcUrl,
+    cfg,
+    deployment,
+    publicClient,
+    relayer,
+    wallet,
+    explorerTx: (txHash) => explorer("tx", txHash),
+    explorerAddress: (address) => explorer("address", address),
+  };
+}
+
+/** A high-level SDK client for this service's relayer. */
+export function chainworkFor(config: ServiceConfig): Chainwork {
+  return new Chainwork(config.cfg, config.publicClient, config.wallet);
+}
