@@ -45,7 +45,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T3.0 | Check x402 v2 header and field names against the official spec; record differences in `docs/X402_ESCROW_SCHEME.md` via an `L0:` PR | PR opened | todo |
+| T3.0 | Check x402 v2 header and field names against the official spec; record differences in `docs/X402_ESCROW_SCHEME.md` via an `L0:` PR | PR opened | blocked (gh unauthenticated; L0 change committed on branch `l0/x402-v2-conformance`) |
 | T3.1 | `services/facilitator`: Fastify + viem; `/supported`, `/verify`, `/settle`, `/escrow/fund`, `/jobs/:id` exactly per the scheme spec; relayer key from env; plain-English `invalidReason` | `pnpm -F facilitator test` (verify rejects tampered terms, wrong payTo, used nonce, low balance) | todo |
 | T3.2 | `services/indexer`: polls escrow events in 500-block chunks into SQLite; resumes from last block; `/events?jobId=` | survives restart; never requests > 1,000 blocks | todo |
 | T3.3 | `services/watcher`: for each Submitted job with a window, fetch `GET /jobs/{id}/output` from the worker, re-run the job's check (JSON schema + content rules from the job spec), call `challenge` if it fails, before the window ends | test with a bad output gets challenged; good output does not | todo |
