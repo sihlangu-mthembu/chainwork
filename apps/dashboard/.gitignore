@@ -1,0 +1,5 @@
+# Deployment artifacts copied in for a local demo run (never commit a live one by accident).
+public/deployment.json
+dist/
+.env
+.env.local
