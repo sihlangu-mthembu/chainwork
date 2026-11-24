@@ -44,13 +44,7 @@ export interface WorkDeps {
   timeoutMs?: number;
 }
 
-export function parseWorkerUrls(raw: string | undefined): Record<string, string> {
-  if (!raw) return {};
-  const parsed = JSON.parse(raw) as Record<string, string>;
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(parsed)) out[k.toLowerCase()] = v.replace(/\/$/, "");
-  return out;
-}
+export { parseWorkerUrls } from "@chainwork/service-kit";
 
 export const urlForProvider = (provider: Address, urls: Record<string, string>): string => {
   const url = urls[provider.toLowerCase()];
