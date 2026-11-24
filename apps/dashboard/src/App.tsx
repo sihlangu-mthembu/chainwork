@@ -1,12 +1,13 @@
 /**
  * SPDX-License-Identifier: MIT
- * The dashboard shell: header, setup card when unconfigured, then wallets, tree, reputation,
- * receipts and controls. Every panel degrades to a clear message instead of crashing.
+ * The dashboard shell: the job-tree story first (what a visitor came to see), then the operator
+ * desk in tabs: wallets, all jobs, reputation, receipts and the kill switches.
  */
-import { AEVUM_TESTNET, TUSD8 } from "@chainwork/types";
+import { useState } from "react";
 import { useConfig } from "./ConfigContext";
 import { Header } from "./components/Header";
 import { SetupCard } from "./components/SetupCard";
+import { TreeStory } from "./components/TreeStory";
 import { WalletsPanel } from "./components/WalletsPanel";
 import { TreePanel } from "./components/TreePanel";
 import { ReputationPanel } from "./components/ReputationPanel";
@@ -14,11 +15,23 @@ import { ReceiptsPanel } from "./components/ReceiptsPanel";
 import { ControlsPanel } from "./components/ControlsPanel";
 import { ExternalLink, Notice } from "./components/ui";
 import { configProblems, isDeploymentReady } from "./config";
-import { shortAddress } from "./lib/format";
+import { activeChain } from "./wagmi";
+
+const DESK = [
+  { id: "wallets", label: "Wallets", render: () => <WalletsPanel /> },
+  { id: "jobs", label: "All jobs", render: () => <TreePanel /> },
+  { id: "reputation", label: "Reputation", render: () => <ReputationPanel /> },
+  { id: "receipts", label: "Receipts", render: () => <ReceiptsPanel /> },
+  { id: "controls", label: "Kill switches", render: () => <ControlsPanel /> },
+] as const;
+
+type DeskId = (typeof DESK)[number]["id"];
 
 export function App() {
   const { config, warnings, loading, deploymentFound } = useConfig();
   const problems = configProblems(config);
+  const [tab, setTab] = useState<DeskId>("wallets");
+  const current = DESK.find((d) => d.id === tab) ?? DESK[0];
   return (
     <div className="app">
       <Header />
@@ -29,7 +42,7 @@ export function App() {
             {warning}
           </Notice>
         ))}
-        {loading ? <p className="muted small">Looking for a runtime deployment.json…</p> : null}
+        {loading ? <p className="muted small">Looking for the deployment file…</p> : null}
 
         <SetupCard config={config} deploymentFound={deploymentFound} />
 
@@ -41,22 +54,39 @@ export function App() {
           </Notice>
         ) : null}
 
-        <WalletsPanel />
-        <TreePanel />
-        <ReputationPanel />
-        <ReceiptsPanel />
-        <ControlsPanel />
+        <TreeStory />
+
+        <section className="desk" aria-label="Operator desk">
+          <div className="desk-tabs" role="tablist">
+            {DESK.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                role="tab"
+                aria-selected={d.id === tab}
+                className={d.id === tab ? "desk-tab is-active" : "desk-tab"}
+                onClick={() => setTab(d.id)}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+          <div className="desk-body" role="tabpanel">
+            {current.render()}
+          </div>
+        </section>
       </main>
 
       <footer className="footer">
         <p>
-          {AEVUM_TESTNET.name} · chain {AEVUM_TESTNET.id.toString()} · tUSD8{" "}
-          <span className="mono">{shortAddress(TUSD8.address, 6)}</span> ·{" "}
-          <ExternalLink href={AEVUM_TESTNET.explorerUrl}>explorer</ExternalLink>
-        </p>
-        <p className="muted small">
-          Chain facts come from @chainwork/types; error text is decoded from the ABIs by @chainwork/sdk. Nothing here
-          custodies funds or keys.
+          Watching {activeChain.name} (chain {activeChain.id.toString()})
+          {config.escrow ? (
+            <>
+              , escrow{" "}
+              <ExternalLink href={`${config.explorerUrl.replace(/\/$/, "")}/address/${config.escrow}`}>{config.escrow}</ExternalLink>
+            </>
+          ) : null}
+          . This page holds no keys and moves no money on its own: every write is signed in your wallet.
         </p>
       </footer>
     </div>

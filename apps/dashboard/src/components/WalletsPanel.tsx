@@ -9,7 +9,7 @@ import { AEVUM_TESTNET, type Address } from "@chainwork/types";
 import { useConfig } from "../ConfigContext";
 import { useWalletBalances } from "../hooks";
 import { formatAmountRounded } from "../lib/format";
-import { ROLE_WALLETS } from "../lib/wallets";
+import { roleWallets } from "../lib/wallets";
 import { AddressLink, Badge, Notice, Panel } from "./ui";
 
 interface WalletRow {
@@ -29,7 +29,7 @@ export function WalletsPanel() {
     if (address) {
       rows.push({ role: "you", label: "connected wallet", address, connected: true });
     }
-    for (const wallet of ROLE_WALLETS) {
+    for (const wallet of roleWallets(config.chainId)) {
       const connected = address !== undefined && address.toLowerCase() === wallet.address.toLowerCase();
       rows.push({
         role: wallet.role,
@@ -40,7 +40,7 @@ export function WalletsPanel() {
       });
     }
     return rows;
-  }, [address]);
+  }, [address, config.chainId]);
 
   const addresses = useMemo(() => targets.map((row) => row.address), [targets]);
   const { rows: balances, error } = useWalletBalances(addresses);

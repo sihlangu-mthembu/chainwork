@@ -4,12 +4,13 @@
  * explicit state, so a demo never stalls on "wrong network".
  */
 import { useState } from "react";
+import { useBlockNumber } from "wagmi";
+import { activeChain } from "../wagmi";
 import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { AEVUM_TESTNET } from "@chainwork/types";
 import { aevumAddChainParams, isUnrecognizedChain } from "../lib/addChain";
 import { shortAddress } from "../lib/format";
 import { toPlainError } from "../lib/errors";
-import { Badge } from "./ui";
 
 interface Eip1193Provider {
   request(args: { method: string; params?: readonly unknown[] }): Promise<unknown>;
@@ -33,7 +34,9 @@ export function Header() {
   const [addState, setAddState] = useState<AddState>("idle");
   const [message, setMessage] = useState<string | null>(null);
 
-  const onAevum = chainId === AEVUM_TESTNET.id;
+  const onAevum = chainId === activeChain.id;
+  const isAevum = activeChain.id === AEVUM_TESTNET.id;
+  const { data: block } = useBlockNumber({ chainId: activeChain.id, watch: true });
 
   async function addAevum(): Promise<void> {
     setMessage(null);
@@ -63,7 +66,7 @@ export function Header() {
   async function switchToAevum(): Promise<void> {
     setMessage(null);
     try {
-      await switchChainAsync({ chainId: AEVUM_TESTNET.id });
+      await switchChainAsync({ chainId: activeChain.id });
       setMessage("Switched to " + AEVUM_TESTNET.name + ".");
     } catch (err) {
       if (isUnrecognizedChain(err)) {
@@ -91,29 +94,26 @@ export function Header() {
   return (
     <header className="topbar">
       <div className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          ⛓
-        </span>
-        <div>
-          <h1>Chainwork</h1>
-          <p>Pay-on-delivery escrow for AI agents · {AEVUM_TESTNET.name}</p>
-        </div>
+        <span className="brand-name">Chainwork</span>
+        <span className="brand-line">Escrow for AI agents that hire other agents</span>
       </div>
 
       <div className="topbar-actions">
-        <span className={onAevum && isConnected ? "chip chip-good" : "chip"}>
-          {isConnected ? (onAevum ? AEVUM_TESTNET.name : "Wrong network") : "Wallet not connected"}
+        <span className="netstat" title={activeChain.rpcUrls.default.http[0]}>
+          <span className={block !== undefined ? "netstat-dot is-live" : "netstat-dot"} aria-hidden="true" />
+          {activeChain.name}
+          {block !== undefined ? <span className="netstat-block">block {block.toString()}</span> : <span className="netstat-block">connecting…</span>}
         </span>
 
         {isConnected ? (
           <>
             {!onAevum ? (
               <button className="button button-primary" onClick={() => void switchToAevum()} disabled={switching}>
-                {switching ? "Switching…" : "Switch to Aevum"}
+                {switching ? "Switching…" : `Switch to ${activeChain.name}`}
               </button>
             ) : null}
             <button className="button" onClick={() => disconnect()} title={address ?? ""}>
-              {address ? shortAddress(address, 4) : "Connected"} · disconnect
+              Disconnect {address ? shortAddress(address, 4) : ""}
             </button>
           </>
         ) : (
@@ -122,19 +122,14 @@ export function Header() {
           </button>
         )}
 
-        <button className="button button-ghost" onClick={() => void addAevum()} disabled={addState === "adding"}>
-          {addState === "adding" ? "Adding…" : addState === "added" ? "Aevum added ✓" : "Add Aevum"}
-        </button>
+        {isAevum ? (
+          <button className="button button-ghost" onClick={() => void addAevum()} disabled={addState === "adding"}>
+            {addState === "adding" ? "Adding…" : addState === "added" ? "Aevum added" : "Add Aevum to wallet"}
+          </button>
+        ) : null}
       </div>
 
-      {message ? (
-        <p className={"topbar-message " + (addState === "failed" ? "topbar-message-bad" : "")}>{message}</p>
-      ) : (
-        <p className="topbar-message">
-          <Badge tone="info">EIP-3085</Badge> One click adds the chain (id {AEVUM_TESTNET.id.toString()},{" "}
-          {AEVUM_TESTNET.nativeCurrency.symbol}, {AEVUM_TESTNET.rpcUrl}).
-        </p>
-      )}
+      {message ? <p className={"topbar-message " + (addState === "failed" ? "topbar-message-bad" : "")}>{message}</p> : null}
     </header>
   );
 }

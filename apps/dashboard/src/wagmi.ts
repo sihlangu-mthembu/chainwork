@@ -27,12 +27,25 @@ export const aevumChain: Chain = {
 };
 
 const rpcUrl = import.meta.env.VITE_RPC_URL?.trim() || AEVUM_TESTNET.rpcUrl;
+const envChainId = Number(import.meta.env.VITE_CHAIN_ID?.trim() || AEVUM_TESTNET.id);
+
+/** A local chain (anvil, 31337) for rehearsing the demo; Aevum otherwise. */
+export const activeChain: Chain =
+  envChainId === AEVUM_TESTNET.id
+    ? aevumChain
+    : {
+        id: envChainId,
+        name: envChainId === 31337 ? "Local chain" : `Chain ${envChainId}`,
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        rpcUrls: { default: { http: [rpcUrl] }, public: { http: [rpcUrl] } },
+        testnet: true,
+      };
 
 export const wagmiConfig = createConfig({
-  chains: [aevumChain],
+  chains: [activeChain],
   connectors: [injected({ shimDisconnect: true })],
   transports: {
-    [AEVUM_TESTNET.id]: http(rpcUrl),
+    [activeChain.id]: http(rpcUrl),
   },
   ssr: false,
 });

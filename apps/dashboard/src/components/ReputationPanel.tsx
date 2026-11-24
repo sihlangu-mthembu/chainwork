@@ -13,12 +13,12 @@ import { formatAmount, formatBps, formatTimestamp, parseAmount, parseJobId } fro
 import { fetchJobEvents } from "../lib/indexer";
 import { recordTx } from "../lib/txStore";
 import { toPlainError } from "../lib/errors";
-import { COORDINATOR } from "../lib/wallets";
+import { coordinatorFor } from "../lib/wallets";
 import { AddressLink, Badge, ErrorNote, Field, Notice, Panel, Stat, TxLinks } from "./ui";
 
 export function ReputationPanel() {
   const { config } = useConfig();
-  const [agentInput, setAgentInput] = useState<string>(COORDINATOR);
+  const [agentInput, setAgentInput] = useState<string>(() => coordinatorFor(config.chainId));
   const [budgetInput, setBudgetInput] = useState("0.10");
   const [historyInput, setHistoryInput] = useState("");
 

@@ -20,6 +20,13 @@ export function formatAmount(units: bigint, decimals: number = TOKEN_DECIMALS): 
   return (negative ? "-" : "") + whole.toString() + fractionText;
 }
 
+/** Money with at least two decimals, like a price: 100000n -> "0.10", 12000n -> "0.012". */
+export function formatMoney(units: bigint, decimals: number = TOKEN_DECIMALS): string {
+  const text = formatAmount(units, decimals);
+  const [whole, fraction = ""] = text.split(".");
+  return `${whole}.${fraction.padEnd(2, "0")}`;
+}
+
 /** 100000n -> "0.10 tUSD8" (keeps the demo's cents visible). */
 export function formatAmountWithUnit(units: bigint, symbol = "tUSD8"): string {
   return formatAmount(units) + " " + symbol;
