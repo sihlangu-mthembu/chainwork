@@ -45,3 +45,5 @@ jobs:
           forge script contracts/script/Deploy.s.sol:DeployLocal --rpc-url http://127.0.0.1:8545 --broadcast
       - name: SDK unit + end-to-end tests
         run: CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test
+      - name: Deployed bytecode == source
+        run: scripts/verify-bytecode.sh deployments/local.json http://127.0.0.1:8545

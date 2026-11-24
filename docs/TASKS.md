@@ -60,7 +60,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T4.1 | Agent runtime: LLM tool-calling loop where the only money tools are SDK calls; deterministic replay mode (record/replay LLM decisions, real chain txs) | `pnpm -F agents test` | todo |
 | T4.2 | Roles: client, coordinator (subcontracts, assembles, submits Merkle root), specialist-data, specialist-bad (returns invalid output), backup | each role runs alone against anvil | todo |
 | T4.3 | `demo:seed`: real past jobs that give the coordinator a proven reputation (bond 0, credit ≥ 0.10) | `reputation.bondBps(coordinator) == 0` on chain | todo |
-| T4.4 | Failure scenarios and demo task definition (Claude) | spec merged | todo |
+| T4.4 | Failure scenarios and demo task definition (Claude): `docs/DEMO_SCENARIOS.md` (S0 seed, S1 zero-capital tree, S2 challenge + re-hire, S3 ghosting refund, S4 prompt injection, S5 kill switch; canonical JSON + metrics function) | spec merged | done (claude) |
 | T4.5 | `demo:all` and `demo:reset` | **G2**: full tree on Aevum in < 3 min | todo |
 
 ## L5 Dashboard (DeepSeek)
@@ -81,9 +81,15 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T6.1 | `docker-compose.yml`: facilitator, indexer, watcher, evaluator, dashboard, agents (DeepSeek) | clean clone → `docker compose up` works | todo |
 | T6.2 | README draft: problem, architecture, workflows, tech stack, addresses, compiler settings, how to run (DeepSeek drafts, Claude edits) | covers the 4 required doc items | todo |
 | T6.3 | `.env.example`, LICENSE (MIT), NOTICE (DeepSeek) | no secrets in repo | todo |
-| T6.4 | `scripts/verify-bytecode.sh`: rebuild with pinned settings, compare runtime bytecode to `cast code` for each deployed address, masking immutables and metadata (Claude) | passes on every address | todo |
+| T6.4 | `scripts/verify-bytecode.sh`: rebuild with pinned settings, compare runtime bytecode to `cast code`, masking only compiler-listed immutables (metadata hash kept, so it proves the exact source) (Claude) | passes on local deployment in CI; fails on swapped addresses | done (claude) |
 | T6.6 | README sections the judges name: known assumptions, limitations, roadmap, distribution plan, path to mainnet, API reference | all present | todo |
 | T6.5 | Demo video script and recording checklist (DeepSeek drafts, human records) | video attached on DoraHacks | todo |
+
+## L0 Spec (Claude)
+
+| ID | Task | Acceptance | Status |
+|---|---|---|---|
+| T0.10 | `docs/THREAT_MODEL.md`: 21 threats, each mapped to a test; assumptions and limitations; red-team log | reviewed | done (claude) |
 
 ## L7 Red team
 
