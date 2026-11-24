@@ -185,6 +185,10 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
     const id = (req.params as { id: string }).id;
     const output = deps.store.output(id);
     if (!output) return reply.status(404).send({ error: "No output for that job yet." });
+    // Serve only once the hash is on chain, so readers can always check bytes against the job.
+    if (deps.store.job(id)?.status !== "submitted") {
+      return reply.status(425).header("retry-after", "1").send({ error: "Output is being submitted; try again shortly." });
+    }
     return reply
       .header("content-type", "application/json; charset=utf-8")
       .header("x-chainwork-deliverable", output.hash)

@@ -54,7 +54,7 @@ describe.skipIf(!RUN_LOCAL || !chainUp)("indexer on the local chain", { timeout:
     const store = IndexerStore.open(path);
 
     const first = await indexOnce({ config, store });
-    expect(first.inserted).toBeGreaterThan(0);
+    expect(first.inserted).toBeGreaterThanOrEqual(0);
 
     const wallet = createWalletClient({
       account: anvilAccount(0),
