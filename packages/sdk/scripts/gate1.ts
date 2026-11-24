@@ -3,8 +3,7 @@
  *   client signs (no gas) → relayer funds via receiveWithAuthorization → provider accepts with a
  *   permit bond → provider submits → window passes → anyone finalizes → provider paid.
  *
- *   NETWORK=aevum DEPLOYER_PK=… CLIENT_PK=… SPECIALIST_DATA_PK=… EVALUATOR_PK=… \
- *     pnpm -F @chainwork/sdk exec tsx scripts/gate1.ts
+ *   NETWORK=aevum CHAINWORK_KEYSTORE_PASSWORD=… pnpm -F @chainwork/sdk gate1   (keys from .keys/)
  *
  * Optional: BUDGET (tUSD8, default 0.01), WINDOW (seconds, default 30).
  */

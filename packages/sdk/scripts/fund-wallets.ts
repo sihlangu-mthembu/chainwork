@@ -2,9 +2,9 @@
  * Split the deployer's tQDAY and tUSD8 across the demo role wallets. The coordinator gets gas
  * but **no tUSD8**: it must hire on credit, which is the point of the demo.
  *
- *   NETWORK=aevum DEPLOYER_PK=0x… pnpm -F @chainwork/sdk exec tsx scripts/fund-wallets.ts
+ *   NETWORK=aevum CHAINWORK_KEYSTORE_PASSWORD=… pnpm -F @chainwork/sdk fund-wallets   (keys from .keys/)
  *
- * Optional: GAS_EACH (tQDAY per wallet, default 0.4), DRY_RUN=1.
+ * Optional: GAS_EACH (tQDAY per wallet, default 0.1 ≈ 500 txs at 1 gwei), DRY_RUN=1.
  */
 import { formatEther, parseEther } from "viem";
 import { fiatTokenV2_2Abi } from "@chainwork/types/abis";
@@ -24,7 +24,7 @@ async function main() {
   const { network, cfg, dep, publicClient, key, wallet, explorer } = setup();
   const deployer = wallet("DEPLOYER");
   const from = deployer.account.address;
-  const gasEach = parseEther(process.env.GAS_EACH ?? "0.4");
+  const gasEach = parseEther(process.env.GAS_EACH ?? "0.1"); // ~500 txs each at 1 gwei
   const dry = process.env.DRY_RUN === "1";
 
   const [gas, usd] = await Promise.all([

@@ -10,3 +10,5 @@ broadcast/*/31337/
 dist/
 reference/
 .DS_Store
+.keys/
+*.keystore
