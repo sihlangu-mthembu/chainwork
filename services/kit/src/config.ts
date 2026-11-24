@@ -56,6 +56,18 @@ export const aevum = defineChain({
 /** anvil account 0 (deployer/relayer). Local development only. */
 const LOCAL_RELAYER_PK = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" as const;
 
+/** anvil's default mnemonic keys, by Chainwork role. Used only when NETWORK=local. */
+const LOCAL_ROLE_KEYS: Record<string, `0x${string}`> = {
+  deployer: LOCAL_RELAYER_PK,
+  client: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+  coordinator: "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
+  "specialist-data": "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6",
+  "specialist-bad": "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a",
+  backup: "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba",
+  watcher: "0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e",
+  evaluator: "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
+};
+
 export function networkName(): NetworkName {
   const n = process.env.NETWORK ?? "local";
   if (n !== "local" && n !== "aevum") throw new Error(`NETWORK must be "local" or "aevum", not "${n}".`);
@@ -96,10 +108,21 @@ export function loadRelayer(network: NetworkName = networkName()): PrivateKeyAcc
     if (!password) throw new Error("Set RELAYER_KEYSTORE_PASSWORD (or CHAINWORK_KEYSTORE_PASSWORD) to unlock the relayer keystore.");
     return loadKeystoreAccount(dirname(keystore), basename(keystore), password);
   }
-  if (network === "local") return privateKeyToAccount(LOCAL_RELAYER_PK);
+  if (network === "local") {
+    const role = process.env.AGENT_ROLE ?? process.env.SERVICE_ROLE ?? "deployer";
+    const local = LOCAL_ROLE_KEYS[role];
+    if (!local) throw new Error(`No local key for role "${role}". Use one of: ${Object.keys(LOCAL_ROLE_KEYS).join(", ")}.`);
+    return privateKeyToAccount(local);
+  }
   throw new Error(
     "No relayer key on Aevum. Set RELAYER_KEYSTORE to a local V3 keystore plus RELAYER_KEYSTORE_PASSWORD, or RELAYER_PK from a secrets manager.",
   );
+}
+
+export function localRoleAddress(role: string): `0x${string}` {
+  const pk = LOCAL_ROLE_KEYS[role];
+  if (!pk) throw new Error(`Unknown local role "${role}".`);
+  return privateKeyToAccount(pk).address;
 }
 
 export interface LoadConfigOptions {
