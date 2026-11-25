@@ -114,10 +114,23 @@ export function loadRelayer(network: NetworkName = networkName()): PrivateKeyAcc
     if (!local) throw new Error(`No local key for role "${role}". Use one of: ${Object.keys(LOCAL_ROLE_KEYS).join(", ")}.`);
     return privateKeyToAccount(local, { nonceManager });
   }
+  // Aevum default: the role's own encrypted keystore in <repo>/.keys (or KEYSTORE_DIR), unlocked with
+  // CHAINWORK_KEYSTORE_PASSWORD. Each role (AGENT_ROLE) signs with its own key, never a shared one.
+  if (password) {
+    const role = (process.env.AGENT_ROLE ?? process.env.SERVICE_ROLE ?? "deployer").replace(/-/g, "_");
+    const dir = process.env.KEYSTORE_DIR ?? fileURLToPath(new URL("../../../.keys", import.meta.url));
+    const cached = keystoreCache.get(`${dir}|${role}`);
+    if (cached) return cached;
+    const account = loadKeystoreAccount(dir, role, password);
+    keystoreCache.set(`${dir}|${role}`, account);
+    return account;
+  }
   throw new Error(
-    "No relayer key on Aevum. Set RELAYER_KEYSTORE to a local V3 keystore plus RELAYER_KEYSTORE_PASSWORD, or RELAYER_PK from a secrets manager.",
+    "No key on Aevum. Set CHAINWORK_KEYSTORE_PASSWORD to unlock the role keystores in .keys/, or RELAYER_KEYSTORE (+ password) or RELAYER_PK from a secrets manager.",
   );
 }
+
+const keystoreCache = new Map<string, PrivateKeyAccount>();
 
 export function localRoleAddress(role: string): `0x${string}` {
   const pk = LOCAL_ROLE_KEYS[role];

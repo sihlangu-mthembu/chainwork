@@ -177,6 +177,14 @@ async function metricsWork(job: WorkJob, deps: WorkDeps): Promise<string> {
  * then assemble the pack. In S2 the first metrics worker is specialist-bad; once its child is
  * rejected the coordinator hires the backup and waits again.
  */
+/**
+ * First block of a dataset job: the deployment block, and never more than 20,000 blocks back
+ * (~5.5 h on Aevum), so three readers (worker, watcher, evaluator) page at most 40 chunks each.
+ */
+export function datasetFrom(deployedAtBlock: number | undefined, latest: number): number {
+  return Math.max(deployedAtBlock ?? 0, latest - 20_000, 0);
+}
+
 async function coordinatorWork(job: WorkJob, deps: WorkDeps): Promise<string> {
   const spec = parseJobSpec(job.description);
   if (!spec || spec.kind !== "pack") throw new Error("The coordinator only handles pack jobs.");
@@ -193,7 +201,7 @@ async function coordinatorWork(job: WorkJob, deps: WorkDeps): Promise<string> {
       kind: "dataset",
       subject: spec.subject,
       token: deps.config.cfg.token,
-      fromBlock: 0,
+      fromBlock: datasetFrom(deps.config.deployment.deployedAtBlock, latest),
       toBlock: latest,
     } as const;
     await deps.cw.subcontract(

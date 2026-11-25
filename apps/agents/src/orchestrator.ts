@@ -541,7 +541,7 @@ export async function runKillSwitch(base: ServiceConfig, stack: Stack): Promise<
   const ownerWallet = walletFor("client", base);
   const clientCw = clientFor("client", base);
   const now = await chainNow(base.publicClient);
-  const description = jobSpecDescription({ v: 1, kind: "dataset", subject: client.address, token: base.cfg.token, fromBlock: 0, toBlock: Number(await base.publicClient.getBlockNumber()) });
+  const description = jobSpecDescription({ v: 1, kind: "dataset", subject: client.address, token: base.cfg.token, fromBlock: Math.max(base.deployment.deployedAtBlock ?? 0, Number(await base.publicClient.getBlockNumber()) - 20_000, 0), toBlock: Number(await base.publicClient.getBlockNumber()) });
   const quote = await toolsQuote(base, stack, description);
   const before = await clientCw.jobCount();
   let error = "";
