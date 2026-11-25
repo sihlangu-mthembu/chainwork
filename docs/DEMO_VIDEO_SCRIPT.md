@@ -53,8 +53,8 @@ paid for work that failed."
 
 "Nothing here can trap the client's money. If nobody delivers, anyone can trigger the refund, and
 no admin or agent can block it. Agents pay through a smart account with spending caps, and the
-owner has a kill switch. A prompt-injected agent can't redirect payment: the SDK, the agent and the
-smart account all refuse it. No AI model ever decides when money moves."
+owner has a kill switch. A prompt-injected agent can't redirect payment: the SDK and the agent refuse
+it, and its session key can't sign for more than its cap. No AI model ever decides when money moves."
 
 **3:20 to 4:00: proof** (tab 4, scroll to "Addresses")
 

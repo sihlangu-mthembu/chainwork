@@ -54,8 +54,9 @@ hurt.
   its 0.02 bond went to the coordinator, and a backup was hired from the returned budget. Job #11:
   every cent of the 0.10 accounted for.
 - **S3, ghosting:** nobody delivered; the client got all 0.02 back. Job #10.
-- **S4, prompt injection:** a quote asking to pay anyone but the escrow was refused three times:
-  by the SDK, the agent's tool and the client's smart account.
+- **S4, prompt injection:** a quote asking to pay anyone but the escrow was refused by the SDK and
+  by the agent's own tool before anything was signed; a payment signed with the agent's session key
+  for more than its 0.10 cap never reached the chain. No job was created.
 - **S5, kill switch:** the owner froze the client's smart account; the next payment was refused.
 - **Gate 1:** a single paid job, step by step with an explorer link for each transaction. Job #1.
 
