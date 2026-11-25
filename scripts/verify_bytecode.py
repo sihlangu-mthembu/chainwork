@@ -27,7 +27,7 @@ CONTRACTS = {
 
 
 def run(cmd):
-    return subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+    return subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip()
 
 
 def artifact(src, name):

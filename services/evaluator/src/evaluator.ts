@@ -11,6 +11,9 @@ import type { Logger, ServiceConfig } from "@chainwork/service-kit";
 import type { Chainwork } from "@chainwork/sdk";
 import type { EvaluatorStore } from "./store.js";
 
+/** Jobs a pass is deciding right now (passes can overlap when the chain is slow). */
+const inFlight = new Set<string>();
+
 export interface EvaluatorDeps {
   config: ServiceConfig;
   cw: Chainwork;
@@ -57,10 +60,12 @@ export async function resolveOnce(deps: EvaluatorDeps): Promise<ResolveOnceResul
       result.skipped++;
       continue;
     }
-    if (store.get(job.id.toString())) {
+    if (store.get(job.id.toString()) || inFlight.has(job.id.toString())) {
       result.skipped++;
       continue;
     }
+    // Overlapping passes on a slow RPC could both decide the same job: claim it first.
+    inFlight.add(job.id.toString());
 
     let ok = false;
     let reason: string;
@@ -94,6 +99,8 @@ export async function resolveOnce(deps: EvaluatorDeps): Promise<ResolveOnceResul
         decision,
         error: e instanceof Error ? e.message : String(e),
       });
+    } finally {
+      inFlight.delete(job.id.toString());
     }
   }
   return result;

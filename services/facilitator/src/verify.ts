@@ -360,18 +360,8 @@ export async function verifyPayment(input: NormalizedPayment, ctx: VerifyContext
     return failure("invalid_escrow_nonce_used", "This payment signature was already used (each job's signature works once).", client);
   }
 
-  // 9. Client balance.
-  const balance = await cw.publicClient.readContract({
-    address: cfg.token,
-    abi: fiatTokenV2_2Abi,
-    functionName: "balanceOf",
-    args: [client],
-  });
-  if (balance < t.budget) {
-    return failure("insufficient_funds", `The client has ${money(balance)}, needs ${money(t.budget)}.`, client);
-  }
-
-  // 10. Signature: EOA (65 bytes) or ERC-1271 (AgentAccount session auth).
+  // 9. Signature: EOA (65 bytes) or ERC-1271 (AgentAccount session auth). Checked before the
+  //    balance, so an unauthorized payment is refused as unauthorized, whatever the balance.
   const signature = p.signature;
   const message = {
     from: client,
@@ -433,6 +423,17 @@ export async function verifyPayment(input: NormalizedPayment, ctx: VerifyContext
     } catch (e) {
       return failure("invalid_escrow_signature", explainError(e).message, client);
     }
+  }
+
+  // 10. Client balance.
+  const balance = await cw.publicClient.readContract({
+    address: cfg.token,
+    abi: fiatTokenV2_2Abi,
+    functionName: "balanceOf",
+    args: [client],
+  });
+  if (balance < t.budget) {
+    return failure("insufficient_funds", `The client has ${money(balance)}, needs ${money(t.budget)}.`, client);
   }
 
   // 11. Simulate the real call: catches frozen guard, session caps, credit and every other revert.

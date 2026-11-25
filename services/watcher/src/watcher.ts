@@ -12,6 +12,9 @@ import type { Logger, ServiceConfig } from "@chainwork/service-kit";
 import type { Chainwork } from "@chainwork/sdk";
 import type { WatcherStore } from "./store.js";
 
+/** Jobs a pass is challenging right now (passes can overlap when the chain is slow). */
+const inFlight = new Set<string>();
+
 export interface WatcherDeps {
   config: ServiceConfig;
   cw: Chainwork;
@@ -67,7 +70,7 @@ export async function watchOnce(deps: WatcherDeps): Promise<WatchOnceResult> {
       continue;
     }
     const prior = store.get(job.id.toString());
-    if (prior && prior.deliverable === ext.deliverable) {
+    if ((prior && prior.deliverable === ext.deliverable) || inFlight.has(job.id.toString())) {
       result.skipped++;
       continue;
     }
@@ -110,6 +113,8 @@ export async function watchOnce(deps: WatcherDeps): Promise<WatchOnceResult> {
       result.skipped++;
       continue;
     }
+    // Overlapping passes on a slow RPC could both see the job unchallenged: claim it first.
+    inFlight.add(job.id.toString());
     try {
       const tx = await cw.challenge(job.id, hashText(`chainwork:${check.reason}`));
       store.mark({
@@ -131,6 +136,8 @@ export async function watchOnce(deps: WatcherDeps): Promise<WatchOnceResult> {
         jobId: job.id.toString(),
         error: e instanceof Error ? e.message : String(e),
       });
+    } finally {
+      inFlight.delete(job.id.toString());
     }
   }
   return result;
