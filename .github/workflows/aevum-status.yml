@@ -1,0 +1,18 @@
+name: aevum-status
+# Read-only look at Aevum (wallet balances, gas price, deployed code). No secrets, no writes.
+on:
+  workflow_dispatch:
+  push:
+    branches: [aevum]
+    paths: ["scripts/aevum-status.mjs", "deployments/aevum.json", ".github/workflows/aevum-status.yml"]
+  schedule:
+    - cron: "17 */6 * * *"
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/aevum-status.mjs | tee -a "$GITHUB_STEP_SUMMARY"
