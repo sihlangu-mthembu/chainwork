@@ -1,57 +1,34 @@
-# Runbook: deploy and Gate 1 on Aevum (Windows PowerShell)
+# Runbook: Chainwork on Aevum (Windows PowerShell)
 
 These steps run on the human's machine, because it is the only one that can reach the Aevum RPC.
-Keys live only in `.keys\` as encrypted keystores (git ignores that folder). The password is never written to disk: you type it into the session.
+Keys live only in `.keys\` as encrypted keystores (git ignores that folder). The password is asked
+once and kept only in the PowerShell process.
 
-## 0. Once per session
+## 1. Put funds on the deployer
+The deployer `0x583BEfc4f5427C1d1d2E366EDAD25568e58154A1` needs about **0.5 tQDAY** (gas for
+deploying and for seven role wallets at 0.05 each) and **at least 0.8 tUSD8**. Easiest: in the QDay
+Discord, run `/faucet` with the deployer's address (1 tQDAY + 5 tUSD8 a day).
+
+## 2. One command
 ```powershell
 cd C:\dev\chainwork
 git pull
 pnpm install
-$env:CHAINWORK_KEYSTORE_PASSWORD = Read-Host "Keystore password"
+.\scripts\aevum.ps1
 ```
+It checks tools and balances, deploys (`deployments\aevum.json`), proves every contract's bytecode,
+splits the funds (the coordinator gets gas only), runs Gate 1, then plays S0–S5 live on Aevum
+(about 15 minutes). Steps already done are skipped. Run one step with `-Step check|deploy|verify|fund|gate1|demo|status`.
 
-## 1. Check the deployer has funds
-```powershell
-cast balance 0x583BEfc4f5427C1d1d2E366EDAD25568e58154A1 --rpc-url https://rpc-test.qday.info --ether
-cast call 0x456569838f1d43009A91ebA4263147Afd7233483 "balanceOf(address)(uint256)" 0x583BEfc4f5427C1d1d2E366EDAD25568e58154A1 --rpc-url https://rpc-test.qday.info
-```
-Needs about 1 tQDAY and at least 1 tUSD8 (1000000).
+If PowerShell refuses to run scripts: `Set-ExecutionPolicy -Scope Process Bypass` first (this window only).
 
-## 2. Deploy the contracts (once)
+## 3. Send the results back
 ```powershell
-$env:ACCOUNT_OWNER = "0xbE213deEEf489afDf67842F411472Aa90f8f8D77"   # client wallet owns the client AgentAccount
-forge script contracts/script/Deploy.s.sol:DeployAevum --rpc-url https://rpc-test.qday.info --broadcast --legacy `
-  --keystore .keys/deployer --password $env:CHAINWORK_KEYSTORE_PASSWORD
-```
-Writes `deployments\aevum.json`.
-
-## 3. Prove the deployed bytecode is this source
-```powershell
-python scripts/verify_bytecode.py deployments/aevum.json https://rpc-test.qday.info
-```
-Every line must say `MATCH`.
-
-## 4. Split the funds across the role wallets (coordinator gets gas only)
-```powershell
-$env:NETWORK = "aevum"
-pnpm -F @chainwork/sdk fund-wallets
-```
-Add `$env:DRY_RUN = "1"` first to preview.
-
-## 5. Gate 1
-```powershell
-pnpm -F @chainwork/sdk gate1
-```
-Must end with `GATE 1 PASSED`. Every step prints an explorer link.
-
-## 6. Commit the deployment
-```powershell
-git add deployments/aevum.json
-git commit -m "deploy: Aevum testnet addresses"
+git add deployments/aevum.json aevum-run.log
+git commit -m "deploy: Aevum testnet"
 git push
 ```
-Then tell Claude, so `docs/CONTEXT.md`, the README and `packages/types` get the addresses.
+If `git push` asks for a login, skip it and tell Claude: the two files can be picked up from the folder.
 
 ## Wallets
 | Role | Keystore | Address |

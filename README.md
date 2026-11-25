@@ -366,9 +366,16 @@ NETWORK=local pnpm -F @chainwork/sdk gate1        # fund → accept → submit �
 NETWORK=local pnpm -F @chainwork/sdk fund-wallets # split deployer funds; coordinator gets gas only
 ```
 
-Gate 1 on Aevum (once the deployment exists and wallets are funded) is documented step by step in
-[docs/RUNBOOK.md](docs/RUNBOOK.md): deploy, verify bytecode, split funds, `gate1`, commit
-`deployments/aevum.json`.
+On Aevum everything runs from one PowerShell command on a machine that can reach the RPC
+([docs/RUNBOOK.md](docs/RUNBOOK.md)): it checks the deployer's balance, deploys, proves the bytecode,
+splits the funds, passes Gate 1 and plays all six scenarios live, skipping steps already done.
+
+```powershell
+.\scripts\aevum.ps1            # or -Step check | deploy | verify | fund | gate1 | demo | status
+```
+
+`node scripts/aevum-status.mjs` (and the `aevum-status` CI job) prints every role wallet's balance
+and the deployed code, with no keys.
 
 ### 5. Facilitator
 
@@ -576,6 +583,12 @@ Stated so a reviewer can disagree with them explicitly:
 6. **One level of subcontracting is enough for the demo.** Deeper trees would need per-level credit
    accounting and more gas than a 4-minute demo can show.
 7. **The demo runs on testnet only.** No mainnet deployment, audit or legal review has happened.
+8. **A job's hook is chosen by its client and can veto actions (ERC-8183).** It can never block the
+   refund, but it could block delivery, and a provider that accepted and could not deliver loses its
+   bond at expiry. Workers therefore take only jobs with no hook or the deployment's BudgetGuardHook
+   (red team R3).
+9. **A silent evaluator delays, it does not steal.** If the evaluator never resolves a challenge, the
+   job refunds the client at expiry, the challenger's stake goes back and the provider keeps its bond.
 
 ## Limitations
 
@@ -662,6 +675,17 @@ Until those gates pass, Chainwork is a testnet prototype. The repo will keep say
 | [docs/X402_ESCROW_SCHEME.md](docs/X402_ESCROW_SCHEME.md) | the frozen wire contract for the `escrow` scheme and its x402 v2 gaps |
 | [docs/DEEPSEEK_KICKOFF.md](docs/DEEPSEEK_KICKOFF.md) | onboarding for the second agent lane |
 | [NOTICE](NOTICE) | third-party code, authors and licenses |
+
+**Red team (T7.1).** [contracts/test/redteam/RedTeam.t.sol](contracts/test/redteam/RedTeam.t.sol)
+attacks the escrow: tampered and replayed signed payments, hiring past credit, children outliving
+parents, a client hook blocking the refund, role spoofing, window edges and double payout. Two real
+findings were fixed, each first written as a failing test:
+
+| # | Finding | Fix |
+|---|---|---|
+| R1 | A payer who names itself evaluator could reject good work to take the worker's bond | A rejection slashes only when the evaluator is not the payer |
+| R2 | On tiny jobs the 10% challenge bond rounded to 0, so challenges were free | The challenge bond rounds up |
+| R3 | A client's hook can veto delivery (allowed by ERC-8183), costing a worker its bond | Accepted on chain; workers refuse unknown hooks (`hookAllowed`) |
 
 ## License and attribution
 

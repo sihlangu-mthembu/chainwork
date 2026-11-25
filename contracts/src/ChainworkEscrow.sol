@@ -76,7 +76,8 @@ contract ChainworkEscrow is IChainworkEscrow, ReentrancyGuard {
 
     /// @inheritdoc IChainworkEscrow
     function challengeBondFor(uint256 budget) public pure returns (uint256) {
-        return budget * CHALLENGE_BOND_BPS / 10_000;
+        // Rounded up, so no job is cheap enough to challenge for free (red team R2).
+        return (budget * CHALLENGE_BOND_BPS + 9_999) / 10_000;
     }
 
     // ------------------------------------------------------ ERC-8183 core
@@ -185,8 +186,10 @@ contract ChainworkEscrow is IChainworkEscrow, ReentrancyGuard {
         JobExt storage e = _ext[jobId];
         if (e.openChildren != 0) revert ChildrenOpen(e.openChildren);
         _before(j, this.reject.selector, data);
-        // A provider who accepted and then gets rejected loses its bond to the payer.
-        _fail(jobId, JobStatus.Rejected, e.accepted);
+        // A provider who accepted and then gets rejected loses its bond to the payer, unless the
+        // payer is also the judge: then a rejection would let the payer take the bond of good work
+        // (red team R1), so the bond goes back and no failure is recorded.
+        _fail(jobId, JobStatus.Rejected, e.accepted && j.evaluator != j.client);
         emit JobRejected(jobId, msg.sender, reason);
         _after(j, this.reject.selector, data);
     }

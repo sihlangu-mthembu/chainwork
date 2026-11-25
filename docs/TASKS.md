@@ -40,13 +40,13 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T2.3 | readTree(rootId) via eth_call only → `JobNode`; UI state mapping; receipt builder with 500-block log chunks | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.4 | Plain-English error decoding for every custom error and FiatToken revert string | `pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.5 | `packages/sdk/scripts/gate1.ts` (fund → accept → submit → finalize, explorer links) and `fund-wallets.ts` (split deployer funds; coordinator gets gas only). Both pass on the local chain. **Aevum run waits on testnet funds** | `NETWORK=aevum pnpm -F @chainwork/sdk gate1` prints GATE 1 PASSED | blocked (testnet funds) |
-| T2.6 | SDK wrapper for the escrow read view `getJobsPage(cursor, limit)` returning jobs, exts and nextCursor (the dashboard calls the view directly today; T5.2 needs the wrapper so paging logic lives in L2) | `pnpm -F @chainwork/sdk typecheck`; dashboard imports the wrapper instead of `readJobsPage` | requested |
+| T2.6 | SDK wrapper for the escrow read view `getJobsPage(cursor, limit)` returning jobs, exts and nextCursor (the dashboard calls the view directly today; T5.2 needs the wrapper so paging logic lives in L2) | `pnpm -F @chainwork/sdk typecheck`; dashboard imports the wrapper instead of `readJobsPage` | done (claude): `getJobsPage`, `getRecentJobs`, `allJobs` in `@chainwork/sdk`; dashboard uses them |
 
 ## L3 Services (DeepSeek)
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T3.0 | Check x402 v2 header and field names against the official spec; record differences in `docs/X402_ESCROW_SCHEME.md` via an `L0:` PR | PR opened | blocked (gh unauthenticated; L0 change committed on branch `l0/x402-v2-conformance`) |
+| T3.0 | Check x402 v2 header and field names against the official spec; record differences in `docs/X402_ESCROW_SCHEME.md` via an `L0:` PR | PR opened | done (merged in PR #1) |
 | T3.1 | `services/facilitator`: Fastify + viem; `/supported`, `/verify`, `/settle`, `/escrow/fund`, `/jobs/:id` exactly per the scheme spec; relayer key from env; plain-English `invalidReason` | `pnpm -F facilitator test` (verify rejects tampered terms, wrong payTo, used nonce, low balance) | done (deepseek) |
 | T3.2 | `services/indexer`: polls escrow events in 500-block chunks into SQLite; resumes from last block; `/events?jobId=` | survives restart; never requests > 1,000 blocks | done (deepseek) |
 | T3.3 | `services/watcher`: for each Submitted job with a window, fetch `GET /jobs/{id}/output` from the worker, re-run the job's check (JSON schema + content rules from the job spec), call `challenge` if it fails, before the window ends | test with a bad output gets challenged; good output does not | done (deepseek) |
@@ -85,7 +85,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T6.2 | README draft: problem, architecture, workflows, tech stack, addresses, compiler settings, how to run (DeepSeek drafts, Claude edits). Also wrote `docs/ARCHITECTURE.md` (component boundaries + where I1–I7 are enforced/tested) | covers the 4 required doc items | done (deepseek, 7b24806 + f196042 + c01beaa + e6cf390) |
 | T6.3 | `.env.example`, LICENSE (MIT), NOTICE (DeepSeek). `.env.example` groups chain/deployment, relayer, facilitator, operator scripts, planned services (`WORKER_*`), agents and `VITE_*`; placeholders only | no secrets in repo | done (deepseek, c67cf4a + b26abb7) |
 | T6.4 | `scripts/verify-bytecode.sh`: rebuild with pinned settings, compare runtime bytecode to `cast code`, masking only compiler-listed immutables (metadata hash kept, so it proves the exact source) (Claude) | passes on local deployment in CI; fails on swapped addresses | done (claude) |
-| T6.6 | README sections the judges name: known assumptions, limitations, roadmap, distribution plan, path to mainnet, API reference | all present | todo |
+| T6.6 | README sections the judges name: known assumptions, limitations, roadmap, distribution plan, path to mainnet, API reference | all present | done (claude): assumptions 1–9, limitations, roadmap, distribution, path to mainnet, API reference |
 | T6.5 | Demo video script and recording checklist (DeepSeek drafts, human records) | video attached on DoraHacks | done (deepseek, 63f73f9; recording is human, still open) |
 
 ## L0 Spec (Claude)
@@ -98,5 +98,5 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T7.1 | DeepSeek attacks contracts after T1.10: bond routing, credit bypass, child/parent ordering, refund blocking, signature/terms tampering, rounding | each finding = failing test in `contracts/test/redteam/` | todo |
+| T7.1 | DeepSeek attacks contracts after T1.10: bond routing, credit bypass, child/parent ordering, refund blocking, signature/terms tampering, rounding | each finding = failing test in `contracts/test/redteam/` | done (claude): 10 attacks in `contracts/test/redteam/`; R1, R2 fixed after failing tests; R3 mitigated in worker-kit |
 | T7.2 | Claude attacks services and agents: facilitator verify bypass, watcher timing, evaluator spoofing, prompt injection into agents | each finding = failing test | todo |
