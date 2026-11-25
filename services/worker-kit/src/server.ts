@@ -173,6 +173,11 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
         release();
         return reply.status(403).send({ error: `Job ${jobId} is not assigned to this worker.` });
       }
+      if (!hookAllowed(job.hook, cw.cfg.budgetGuard)) {
+        running.delete(jobId);
+        release();
+        return reply.status(403).send({ error: `Job ${jobId} uses a hook this worker does not trust (${job.hook}); it could block delivery.` });
+      }
       const ext = await cw.getJobExt(BigInt(jobId));
       if (!ext.accepted) {
         await cw.accept(BigInt(jobId));
@@ -235,7 +240,8 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
           try {
             const job = await cw.getJob(jobId);
             const ext = await cw.getJobExt(jobId);
-            if (job.status !== JobStatus.Funded || ext.deliverable !== zeroHash) {
+            if (job.status !== JobStatus.Funded || ext.deliverable !== zeroHash || !hookAllowed(job.hook, cw.cfg.budgetGuard)) {
+              if (!hookAllowed(job.hook, cw.cfg.budgetGuard)) deps.logger?.warn("worker.hook-refused", { jobId: key, hook: job.hook });
               running.delete(key);
               release();
               continue;
@@ -268,6 +274,18 @@ export function buildWorkerApp(deps: WorkerAppDeps): FastifyInstance {
   }
 
   return app;
+}
+
+/**
+ * Red team R3: a job's hook can veto delivery, and a provider that accepted but could not deliver
+ * loses its bond at expiry. So a worker takes only jobs with no hook or the deployment's own
+ * BudgetGuardHook (plus any in WORKER_ALLOWED_HOOKS, comma-separated).
+ */
+export function hookAllowed(hook: string, budgetGuard: string | undefined): boolean {
+  const ok = [zeroAddress, budgetGuard ?? zeroAddress, ...(process.env.WORKER_ALLOWED_HOOKS ?? "").split(",")]
+    .map((a) => a.trim().toLowerCase())
+    .filter(Boolean);
+  return ok.includes(hook.toLowerCase());
 }
 
 /** Worker states after which a job never needs to be started again. */

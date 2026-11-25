@@ -23,6 +23,13 @@ import {
 import { canonicalJson, hashText, jobSpecDescription } from "@chainwork/checks";
 import { createLogger, chainworkFor, type Logger, type ServiceConfig } from "@chainwork/service-kit";
 import { chainNow, waitFor, warp } from "@chainwork/service-kit/testing";
+
+/** Move past `seconds` of chain time: jump on a local chain, wait for real blocks on Aevum. */
+async function advance(base: ServiceConfig, seconds: number): Promise<void> {
+  if (base.network === "local") return warp(seconds, base.rpcUrl);
+  const target = (await chainNow(base.publicClient)) + seconds;
+  await waitFor(async () => (await chainNow(base.publicClient)) > target, { timeoutMs: (seconds + 120) * 1000, intervalMs: 2000, label: "chain time" });
+}
 import { buildWorkerApp, makeWork, WorkerStore, type WorkKind } from "worker-kit";
 import { listSubmitted, WatcherStore, watchOnce } from "watcher";
 import { EvaluatorStore, resolveOnce } from "evaluator";
@@ -314,7 +321,7 @@ export async function runSeed(base: ServiceConfig, logger: Logger): Promise<Demo
   };
 }
 
-export async function runTreeScenario(stack: Stack, label: string, timeoutMs = 240_000): Promise<DemoReport> {
+export async function runTreeScenario(stack: Stack, label: string, timeoutMs = stack.base.network === "local" ? 240_000 : 900_000): Promise<DemoReport> {
   const base = stack.base;
   const client = accountFor("client");
   const { account, sessionKey } = await ensureSession(base);
@@ -406,7 +413,7 @@ export async function runGhosting(base: ServiceConfig, logger: Logger): Promise<
     functionName: "balanceOf",
     args: [client.address],
   });
-  await warp(30);
+  await advance(base, 30);
   await clientFor("deployer", base).claimRefund(jobId);
   const job = await clientCw.getJob(jobId);
   const after = await base.publicClient.readContract({

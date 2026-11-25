@@ -13,7 +13,8 @@ import {IERC8183} from "./IERC8183.sol";
 ///  I3  at subcontract time: parent.allocated <= parent.bond + reputation.creditLimit(provider)
 ///  I4  a parent cannot submit, complete or finalize while openChildren > 0
 ///  I5  claimRefund cannot be blocked by any hook or role (children expire before parents)
-///  I6  a slashed bond goes only to the payer of the failed job (root: client; child: parent provider)
+///  I6  a slashed bond goes only to the payer of the failed job (root: client; child: parent provider),
+///      and a rejection slashes only when the evaluator is not that payer
 ///  I7  funds are released only by: evaluator decision, verifier proof, or an unchallenged window
 ///
 /// Settlement rules:
@@ -121,7 +122,7 @@ interface IChainworkEscrow is IERC8183 {
 
     function MAX_CHALLENGE_WINDOW() external view returns (uint64); // 600 s
 
-    /// @return bond a challenger must post, in base units, for a job of this budget.
+    /// @return bond a challenger must post, in base units, for a job of this budget (10%, rounded up).
     function challengeBondFor(uint256 budget) external view returns (uint256);
 
     // ------------------------------------------------------ gasless funding

@@ -1,7 +1,13 @@
-/** Role accounts and per-role Chainwork clients. Local anvil keys; on Aevum, <ROLE>_PK. */
+/**
+ * Role accounts and per-role Chainwork clients. Local chain: anvil's keys. Aevum: the encrypted
+ * keystores in <repo>/.keys (or KEYSTORE_DIR), unlocked with CHAINWORK_KEYSTORE_PASSWORD; raw
+ * <ROLE>_PK variables are accepted for tests only.
+ */
+import { fileURLToPath } from "node:url";
 import { createWalletClient, http, type WalletClient } from "viem";
 import { nonceManager, privateKeyToAccount } from "viem/accounts";
 import { Chainwork, type ChainworkConfig } from "@chainwork/sdk";
+import { loadKeystoreAccount } from "@chainwork/sdk/node";
 import { loadServiceConfig, type ServiceConfig } from "@chainwork/service-kit";
 import { anvilAccount } from "@chainwork/service-kit/testing";
 
@@ -16,6 +22,8 @@ export const ROLE_INDEX: Record<string, number> = {
   evaluator: 7,
 };
 
+const keystoreCache = new Map<string, ReturnType<typeof privateKeyToAccount>>();
+
 export function accountFor(
   role: string,
   network = process.env.NETWORK ?? "local",
@@ -28,7 +36,15 @@ export function accountFor(
     if (index === undefined) throw new Error(`No local index for role "${role}".`);
     return anvilAccount(index);
   }
-  throw new Error(`Set ${envName} for network ${network}.`);
+  const password = process.env.CHAINWORK_KEYSTORE_PASSWORD;
+  if (!password) throw new Error(`Set CHAINWORK_KEYSTORE_PASSWORD to unlock the ${role} keystore for ${network}.`);
+  const name = role.replace(/-/g, "_");
+  const cached = keystoreCache.get(name);
+  if (cached) return cached;
+  const dir = process.env.KEYSTORE_DIR ?? fileURLToPath(new URL("../../../.keys", import.meta.url));
+  const account = loadKeystoreAccount(dir, name, password);
+  keystoreCache.set(name, account);
+  return account;
 }
 
 /** Load a service config as a specific role (used by the in-process demo stack). */

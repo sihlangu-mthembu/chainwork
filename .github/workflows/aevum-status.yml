@@ -1,0 +1,37 @@
+name: aevum-status
+# Read-only look at Aevum (wallet balances, gas price, deployed code). No secrets, no writes.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, aevum]
+    paths: ["scripts/aevum-status.mjs", "deployments/aevum.json", ".github/workflows/aevum-status.yml"]
+  schedule:
+    - cron: "17 */6 * * *"
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/aevum-status.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    # Prove the code at every deployed address is exactly this repository's source.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - id: dep
+        run: echo "exists=$([ -f deployments/aevum.json ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - if: steps.dep.outputs.exists == 'yes'
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - if: steps.dep.outputs.exists == 'yes'
+        run: |
+          set -o pipefail
+          forge build >/dev/null
+          python3 scripts/verify_bytecode.py deployments/aevum.json https://rpc-test.qday.info | tee -a "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,64 @@
+name: pages
+# The live dashboard for Aevum, on GitHub Pages: built against deployments/aevum.json with the full
+# event history baked in (events.json), refreshed every six hours. Read-only; holds no keys.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["deployments/aevum.json", "apps/dashboard/**"]
+  schedule:
+    - cron: "41 */6 * * *"
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      deployed: ${{ steps.dep.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: dep
+        run: echo "exists=$([ -f deployments/aevum.json ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+  build:
+    needs: check
+    if: needs.check.outputs.deployed == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Deployment and event history
+        working-directory: apps/dashboard
+        run: |
+          mkdir -p public
+          cp ../../deployments/aevum.json public/deployment.json
+          node scripts/snapshot-events.mjs ../../deployments/aevum.json https://rpc-test.qday.info public/events.json
+      - name: Build
+        working-directory: apps/dashboard
+        env:
+          VITE_CHAIN_ID: "44005"
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: pnpm build --base "/${{ github.event.repository.name }}/"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/dashboard/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -46,6 +46,11 @@ export function useEscrowEvents(): EscrowEvents {
       const latest = await client.getBlockNumber({ cacheTime: 0 });
       let cache = caches.get(key);
       if (!cache) {
+        // A hosted build ships the history up to its build time (scripts/snapshot-events.mjs).
+        cache = (await loadSnapshot(config.escrow, config.chainId)) ?? undefined;
+        if (cache) caches.set(key, cache);
+      }
+      if (!cache) {
         const from = config.fromBlock ?? 0n;
         const floor = latest > MAX_LOOKBACK ? latest - MAX_LOOKBACK : 0n;
         cache = { cursor: (from > floor ? from : floor) - 1n, events: [], truncatedBefore: from < floor ? floor : null };
@@ -80,6 +85,40 @@ export function useEscrowEvents(): EscrowEvents {
     scanning: query.isFetching && (cache?.events.length ?? 0) === 0,
     truncatedBefore: cache?.truncatedBefore ?? null,
   };
+}
+
+interface SnapshotFile {
+  escrow: string;
+  chainId: number;
+  cursor: string;
+  logs: { data: `0x${string}`; topics: [`0x${string}`, ...`0x${string}`[]]; blockNumber: string; logIndex: string; transactionHash: string }[];
+}
+
+async function loadSnapshot(escrow: string, chainId: number): Promise<EventCache | null> {
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}events.json`, { cache: "no-cache" });
+    if (!res.ok) return null;
+    const snap = (await res.json()) as SnapshotFile;
+    if (snap.escrow.toLowerCase() !== escrow.toLowerCase() || snap.chainId !== chainId) return null;
+    const events: RawEvent[] = [];
+    for (const log of snap.logs) {
+      try {
+        const d = decodeEventLog({ abi: chainworkEscrowImplAbi, data: log.data, topics: log.topics });
+        events.push({
+          eventName: d.eventName,
+          args: (d.args ?? {}) as Record<string, unknown>,
+          blockNumber: BigInt(log.blockNumber),
+          logIndex: Number(log.logIndex),
+          txHash: log.transactionHash,
+        });
+      } catch {
+        // not an escrow event we know
+      }
+    }
+    return { cursor: BigInt(snap.cursor), events, truncatedBefore: null };
+  } catch {
+    return null;
+  }
 }
 
 const blockTimes = new Map<string, number>();

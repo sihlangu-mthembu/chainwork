@@ -13,3 +13,4 @@ export * from "./quote.js";
 export * from "./client.js";
 export * from "./tree.js";
 export * from "./errors.js";
+export * from "./pages.js";
