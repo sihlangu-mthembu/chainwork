@@ -27,6 +27,16 @@ function Say($text) { Write-Host ""; Write-Host "== $text" -ForegroundColor Yell
 function Done($text) { Write-Host "   $text" -ForegroundColor Green }
 function Fail($text) { Write-Host "   $text" -ForegroundColor Red; exit 1 }
 
+# Belt and braces: if a tool ever echoes the password, take it back out of the log.
+function Scrub-Log {
+  if ($env:CHAINWORK_KEYSTORE_PASSWORD -and (Test-Path $Log)) {
+    $text = [IO.File]::ReadAllText((Resolve-Path $Log))
+    if ($text.Contains($env:CHAINWORK_KEYSTORE_PASSWORD)) {
+      [IO.File]::WriteAllText((Resolve-Path $Log), $text.Replace($env:CHAINWORK_KEYSTORE_PASSWORD, "********"))
+    }
+  }
+}
+
 function Need-Password {
   if (-not $env:CHAINWORK_KEYSTORE_PASSWORD) {
     $secure = Read-Host "Keystore password (from the setup message)" -AsSecureString
@@ -54,12 +64,15 @@ function Deploy {
   Say "Deploying the contracts to Aevum"
   Need-Password
   $env:ACCOUNT_OWNER = $ClientOwner
-  # Through cmd so forge's stderr stays plain text; the password goes in an environment variable, not the command line.
-  $env:ETH_PASSWORD = $env:CHAINWORK_KEYSTORE_PASSWORD
-  & cmd /c "forge script contracts/script/Deploy.s.sol:DeployAevum --rpc-url $Rpc --broadcast --legacy --slow --keystore .keys/deployer 2>&1" |
+  # Through cmd so forge's stderr stays plain text. The password reaches forge as a file only this
+  # user can read, deleted straight after; it never appears on a command line or in the log.
+  $pwFile = Join-Path $env:TEMP ("cw-" + [guid]::NewGuid().ToString("N") + ".txt")
+  [IO.File]::WriteAllText($pwFile, $env:CHAINWORK_KEYSTORE_PASSWORD)
+  & cmd /c "forge script contracts/script/Deploy.s.sol:DeployAevum --rpc-url $Rpc --broadcast --legacy --slow --keystore .keys/deployer --password-file `"$pwFile`" 2>&1" |
     Tee-Object -Append $Log | Select-String -Pattern "Error|ONCHAIN EXECUTION|Contract Address|deployed|Transactions saved" | ForEach-Object { "   $_" }
   $code = $LASTEXITCODE
-  Remove-Item Env:ETH_PASSWORD -ErrorAction SilentlyContinue
+  Remove-Item $pwFile -Force -ErrorAction SilentlyContinue
+  Scrub-Log
   if ($code -ne 0) { Fail "forge exited with code $code. See $Log." }
   if (-not (Test-Path "deployments\aevum.json")) { Fail "Deploy did not write deployments\aevum.json. See $Log." }
   Done "Deployed. Addresses are in deployments\aevum.json."
@@ -116,5 +129,6 @@ switch ($Step) {
   "status" { Status }
   default { Check; Deploy; Verify; Fund; Gate1; Demo; Status }
 }
+Scrub-Log
 Write-Host ""
 Write-Host "Finished. Next: git add deployments/aevum.json aevum-run.log; git commit -m 'deploy: Aevum'; then tell Claude." -ForegroundColor Cyan
