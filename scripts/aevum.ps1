@@ -88,21 +88,25 @@ function Verify {
 }
 
 function Fund {
+  if (Test-Path "deployments\.aevum-funded") { Done "Wallets already funded: skipping."; return }
   Say "Sharing gas and tUSD8 across the role wallets (the coordinator gets gas only)"
   Need-Password
   $env:NETWORK = "aevum"
   if (-not $env:GAS_EACH) { $env:GAS_EACH = "0.05" }
   & cmd /c "pnpm -s -F @chainwork/sdk fund-wallets 2>&1" | Tee-Object -Append $Log
   if ($LASTEXITCODE -ne 0) { Fail "Funding failed. See $Log." }
+  Set-Content "deployments\.aevum-funded" (Get-Date -Format o)
   Done "Wallets funded."
 }
 
 function Gate1 {
+  if (Test-Path "deployments\.aevum-gate1") { Done "Gate 1 already passed: skipping."; return }
   Say "Gate 1: one paid job settles on Aevum"
   Need-Password
   $env:NETWORK = "aevum"
   & cmd /c "pnpm -s -F @chainwork/sdk gate1 2>&1" | Tee-Object -Append $Log
   if ($LASTEXITCODE -ne 0) { Fail "Gate 1 failed. See $Log." }
+  Set-Content "deployments\.aevum-gate1" (Get-Date -Format o)
   Done "Gate 1 passed."
 }
 
