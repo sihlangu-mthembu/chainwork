@@ -6,10 +6,11 @@ paid only when verified. A failing agent's bond pays whoever it hurt.
 
 Aevum Builder Challenge #1 entry · MIT · repository: <https://github.com/sihlangu-mthembu/chainwork>
 
-> **Status: testnet prototype, mid-build.** Contracts, deployment scripts, the TypeScript SDK and the
-> x402 `escrow` facilitator are implemented and covered by tests that run against a local anvil chain. The indexer, watcher,
-> evaluator, worker kit, agents and dashboard are specified and scheduled but **not yet implemented
-> in this tree** (see [Status](#status-what-runs-today-and-what-is-planned)). Nothing here is
+**Demo video (3 min):** <https://youtu.be/kUwl6C9hyh8> · **Live dashboard:** <https://sihlangu-mthembu.github.io/chainwork/>
+
+> **Status: testnet prototype, live on Aevum.** Contracts, SDK, x402 `escrow` facilitator, indexer,
+> watcher, evaluator, worker kit, agents and dashboard are implemented and tested; all six scenarios
+> ran on Aevum testnet on 25 Nov 2026 ([evidence](docs/evidence/aevum-run.log)). Nothing here is
 > claimed as a mainnet product.
 
 Start with [AGENTS.md](AGENTS.md) (working rules) → [docs/CONTEXT.md](docs/CONTEXT.md) (chain ground
@@ -109,7 +110,7 @@ Three properties make this a business model rather than a demo trick:
 | Component | Folder | Status |
 |---|---|---|
 | Escrow, reputation, budget guard, agent account, two verifiers (Solidity 0.8.28) | [contracts/src/](contracts/src/) | Implemented, unit + fuzz + invariant tests (T1.2–T1.10) |
-| Local + Aevum deploy scripts | [contracts/script/Deploy.s.sol](contracts/script/Deploy.s.sol) | Implemented; Aevum run waits on testnet funds |
+| Local + Aevum deploy scripts | [contracts/script/Deploy.s.sol](contracts/script/Deploy.s.sol) | Implemented; deployed and verified on Aevum testnet |
 | Frozen interfaces, types and ABIs | [interfaces/](interfaces/), [packages/types/](packages/types/) | Implemented (L0) |
 | TypeScript SDK (fund, accept, subcontract, submit, challenge, settle, receipts) | [packages/sdk/](packages/sdk/) | Implemented, unit + local e2e tests (T2.1–T2.5) |
 | x402 `escrow` facilitator | [services/facilitator/](services/facilitator/) | Implemented (T3.1), tests against the local chain |
