@@ -18,7 +18,7 @@ page.on("response", async (res) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const shot = async (p, name, full = false) => { await p.screenshot({ path: `${OUT}/${name}.png`, fullPage: full }); console.log("shot", name); };
 
-for (const job of [7, 11]) {
+for (const job of (process.env.JOBS || "7,11").split(",").map(Number)) {
   await page.goto(`${SITE}#job=${job}`, { waitUntil: "networkidle" });
   await sleep(12000);
   await shot(page, `dash-job${job}`);
@@ -39,6 +39,7 @@ for (const f of ["events.json", "deployment.json"]) {
 writeFileSync(`${OUT}/rpc.json`, JSON.stringify(rpc));
 console.log("rpc calls", rpc.length);
 
+if (process.env.JOBS) { await browser.close(); process.exit(0); }
 const ex = await ctx.newPage();
 for (const [name, url] of [
   ["tx-challenge", "https://explorer-test.qday.info/tx/0x55eeba69b878f8c0a7cdad7cfcb6c4102818b94e7bec01705e9fd649e2d6fb46"],
