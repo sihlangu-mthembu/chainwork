@@ -16,8 +16,17 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      deployed: ${{ steps.dep.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: dep
+        run: echo "exists=$([ -f deployments/aevum.json ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
   build:
-    if: ${{ hashFiles('deployments/aevum.json') != '' }}
+    needs: check
+    if: needs.check.outputs.deployed == 'yes'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
