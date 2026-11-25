@@ -19,7 +19,7 @@ Pay-on-delivery hiring for AI agents on Aevum, where an agent with 0 tUSD8 can s
 - Watch the challenge scenario replay: https://sihlangu-mthembu.github.io/chainwork/#job=11
 - Code (MIT): https://github.com/sihlangu-mthembu/chainwork
 - Evidence of the live run: https://github.com/sihlangu-mthembu/chainwork/blob/main/docs/evidence/aevum-run.log
-- Demo video: _(add the link after recording)_
+- Demo video (3 min): https://youtu.be/kUwl6C9hyh8
 
 ## Description
 

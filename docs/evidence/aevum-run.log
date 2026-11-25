@@ -1,0 +1,168 @@
+# Chainwork on Aevum testnet (chain 44005), 25 Nov 2026: console output of the live run
+# Excerpt of the operator's console log. Removed only tool noise: a first launcher attempt that
+# stopped before deploying, local file paths, two Windows text-encoding tracebacks from the
+# launcher, and one agent start that stopped because its key was not configured yet (it was rerun).
+# Nothing else is edited. Every transaction below can be checked on https://explorer-test.qday.info
+Compiling 53 files with Solc 0.8.28
+Solc 0.8.28 finished in 3.70s
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  escrow 0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43
+  reputation 0x11Cde75aa12E8D3146e8a8648675aC8a064c2Edf
+  budgetGuard 0x2D9545aeBB6Ec629f6BAEdCEbbf7d9B5c981bbE1
+  clientAccount 0x08cfC1A474782a9627121cE42a33D76320dC4817
+  written deployments/aevum.json
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 44005
+
+Estimated gas price: 1 gwei
+
+Estimated total gas used for script: 9247294
+
+Estimated amount required: 0.009247294 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Building with pinned settings (foundry.toml)...
+  solc 0.8.28+commit.7893614a, evm shanghai, optimizer runs 200
+  MATCH     ChainworkEscrow      0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43  (19107 bytes, 416 immutable bytes masked)
+  MATCH     ReputationRegistry   0x11Cde75aa12E8D3146e8a8648675aC8a064c2Edf  (2847 bytes, 64 immutable bytes masked)
+  MATCH     BudgetGuardHook      0x2D9545aeBB6Ec629f6BAEdCEbbf7d9B5c981bbE1  (2552 bytes, 128 immutable bytes masked)
+  MATCH     HashVerifier         0x018E5318378795b0977c22472B6EC64b24a9738B  (285 bytes, 0 immutable bytes masked)
+  MATCH     SignedDataVerifier   0x7c6F62440FbDa111c12B73eE742914ED0f822aa2  (1458 bytes, 64 immutable bytes masked)
+  MATCH     AgentAccount         0x08cfC1A474782a9627121cE42a33D76320dC4817  (4829 bytes, 448 immutable bytes masked)
+All deployed contracts match this source.
+[aevum] deployer 0x583BEfc4f5427C1d1d2E366EDAD25568e58154A1: 0.982889454 tQDAY, 5 tUSD8
+  CLIENT           0xbE213deEEf489afDf67842F411472Aa90f8f8D77  +0.05 tQDAY
+    https://explorer-test.qday.info/tx/0x07c8a320ce99f12476f7c7e79df9f050d32f145770909b9b50e59484dc3bc4df
+  CLIENT           0xbE213deEEf489afDf67842F411472Aa90f8f8D77  +0.4 tUSD8
+    https://explorer-test.qday.info/tx/0x80fb3a99ffbfa25ede239bcbe2e3b66b8f2ed266d27575995584fc2aed34e139
+  COORDINATOR      0x28C0B52FAd3Ce860324C3DA7DfDdcD7b94cEA40A  +0.05 tQDAY
+    https://explorer-test.qday.info/tx/0x0c328ae9e80e180855aab04deabcb081dc4835bfb27c720f160098b3722a8a16
+  SPECIALIST_DATA  0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3  +0.05 tQDAY
+    https://explorer-test.qday.info/tx/0x21e750adf665fea09af5f290f9f922e13384dc6842b2185199d9abbf611afc74
+  SPECIALIST_DATA  0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3  +0.05 tUSD8
+    https://explorer-test.qday.info/tx/0x824a758b35caf2918ffda10783024ad6e9a7041a12003090d0a2cd183cb428b1
+  SPECIALIST_BAD   0x80Dec5f266418EB8ae26A6C2Ee592c9082E4c00d  +0.05 tQDAY
+    https://explorer-test.qday.info/tx/0x29aad42f0d724750197756eb0ae9871bf9015176dac407c40912a4444b1e31db
+  SPECIALIST_BAD   0x80Dec5f266418EB8ae26A6C2Ee592c9082E4c00d  +0.05 tUSD8
+    https://explorer-test.qday.info/tx/0x55a03ab73093a9102b698e9876dbba5213358499e2d1fd5a6e747d4a420a0b53
+  BACKUP           0x7117c6741d15f794751C447Df5F96F48501D1DA9  +0.05 tQDAY
+    https://explorer-test.qday.info/tx/0x1759535fc643d29079d9e30c9506ead4b8faf67086e0d0dc53b14d3dbe986793
+  BACKUP           0x7117c6741d15f794751C447Df5F96F48501D1DA9  +0.05 tUSD8
+    https://explorer-test.qday.info/tx/0x1992d13a3dc2e9469d5b2f6f4f0337c470e77963a24559351825b4bb2524a5f6
+  WATCHER          0xFCEB78c36c369d0C90a6c91d4498A1991Ed036bd  +0.05 tQDAY
+    https://explorer-test.qday.info/tx/0xa97cd03d54b7cfd8f6330d3fcebd886adc601a8b7d6b536dd8fafab846c31fa2
+  WATCHER          0xFCEB78c36c369d0C90a6c91d4498A1991Ed036bd  +0.03 tUSD8
+    https://explorer-test.qday.info/tx/0x270bf28d9cfaa235345018a5b979e3f7d457df8bd045655aad4e9794739e1e4f
+  EVALUATOR        0x6024AaEC247E11c53c9799ED018D67Ee2B5373e4  +0.05 tQDAY
+    https://explorer-test.qday.info/tx/0xa7284920bc08e2ef52b297b4813db007b72a9670d3a2da71f818dd54f7dff605
+  CLIENT AgentAccount 0x08cfC1A474782a9627121cE42a33D76320dC4817  +0.3 tUSD8
+    https://explorer-test.qday.info/tx/0xb5cacab739bd0976e498693d0b0cbf24a3b8825ec7252c9a016e6d4bbf106d1f
+COORDINATOR stays at 0 tUSD8 (gas only).
+[aevum] escrow 0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43
+client 0xbE213deEEf489afDf67842F411472Aa90f8f8D77: 0.4 tUSD8, 0.05 tQDAY (needs none)
+quote: 0.01 tUSD8, provider bond 0.005, worst-case loss 0.005
+1. client signed ReceiveWithAuthorization (nonce = terms hash), no gas
+2. relayer funded job #1: https://explorer-test.qday.info/tx/0x8cda9e45d4060b8274616d288213741c7c661dd7b00945e97bc7639dd641f410
+3. provider accepted, bond 0.005 via permit: https://explorer-test.qday.info/tx/0xf8e696571ec2a6c468216b02e8e80a8b66c6f1a443886822f8c74e946bb10864
+4. provider submitted deliverable 0xda58e281b0e47b3da93a9a3a1d3be08de4af68ee8dc0de2472e6a41c3f3611c1: https://explorer-test.qday.info/tx/0xc141e92d7af688fd04099174380299139facda32ea7e1df02f12218b115d7c55
+   challenge window: 29s left
+   challenge window: 24s left
+   challenge window: 18s left
+   challenge window: 13s left
+   challenge window: 8s left
+   challenge window: 2s left
+5. window passed unchallenged, finalized: https://explorer-test.qday.info/tx/0x3c23141c23f04258fecb944b3a4bca97bfccf4b3b46a43f469166026e3ef0d1c
+job #1: Completed (Settled); provider net +0.01 tUSD8
+GATE 1 PASSED
+Building with pinned settings (foundry.toml)...
+  solc 0.8.28+commit.7893614a, evm shanghai, optimizer runs 200
+  MATCH     ChainworkEscrow      0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43  (19107 bytes, 416 immutable bytes masked)
+  MATCH     ReputationRegistry   0x11Cde75aa12E8D3146e8a8648675aC8a064c2Edf  (2847 bytes, 64 immutable bytes masked)
+  MATCH     BudgetGuardHook      0x2D9545aeBB6Ec629f6BAEdCEbbf7d9B5c981bbE1  (2552 bytes, 128 immutable bytes masked)
+  MATCH     HashVerifier         0x018E5318378795b0977c22472B6EC64b24a9738B  (285 bytes, 0 immutable bytes masked)
+  MATCH     SignedDataVerifier   0x7c6F62440FbDa111c12B73eE742914ED0f822aa2  (1458 bytes, 64 immutable bytes masked)
+  MATCH     AgentAccount         0x08cfC1A474782a9627121cE42a33D76320dC4817  (4829 bytes, 448 immutable bytes masked)
+All deployed contracts match this source.
+{"t":"2026-11-25T11:59:26.390Z","level":"info","service":"agents","event":"seed.done","bondBps":"0","creditLimit":"100000","balance":"0"}
+{"t":"2026-11-25T11:59:27.602Z","level":"info","service":"agents","event":"stack.ready","facilitator":3402,"coordinator":4100,"badMetrics":false}
+{"t":"2026-11-25T11:59:40.339Z","level":"info","service":"agents","event":"settle.broadcast","termsHash":"0x0e70a141642bf21b66747a0cc6b55cb257aeca95b7bef7b83c42b73e7aee5edd","txHash":"0x2eb5e2b0609d768a6eadfe27d6499458f3b236512fd0342958928822b9f23745","explorer":"https://explorer-test.qday.info/tx/0x2eb5e2b0609d768a6eadfe27d6499458f3b236512fd0342958928822b9f23745"}
+{"t":"2026-11-25T11:59:45.334Z","level":"info","service":"agents","event":"settle.done","termsHash":"0x0e70a141642bf21b66747a0cc6b55cb257aeca95b7bef7b83c42b73e7aee5edd","jobId":"7","txHash":"0x2eb5e2b0609d768a6eadfe27d6499458f3b236512fd0342958928822b9f23745","explorer":"https://explorer-test.qday.info/tx/0x2eb5e2b0609d768a6eadfe27d6499458f3b236512fd0342958928822b9f23745"}
+{"t":"2026-11-25T11:59:45.339Z","level":"info","service":"agents","event":"agent.hired","jobId":"7","url":"http://127.0.0.1:4100"}
+{"t":"2026-11-25T11:59:50.416Z","level":"info","service":"agents","event":"worker.auto-accepted","jobId":"7"}
+{"t":"2026-11-25T11:59:59.275Z","level":"info","service":"agents","event":"worker.auto-accepted","jobId":"8"}
+{"t":"2026-11-25T12:00:00.344Z","level":"info","service":"agents","event":"work.dataset","jobId":"8","transfers":9}
+{"t":"2026-11-25T12:00:03.718Z","level":"info","service":"agents","event":"coordinator.subcontracted","root":"7","data":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3","metrics":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}
+{"t":"2026-11-25T12:00:04.401Z","level":"info","service":"agents","event":"worker.auto-accepted","jobId":"9"}
+{"t":"2026-11-25T12:00:05.411Z","level":"info","service":"agents","event":"work.metrics","jobId":"9","bad":false}
+{"t":"2026-11-25T12:00:06.207Z","level":"info","service":"agents","event":"watch.ok","jobId":"8","reason":"Output matches the job spec."}
+{"t":"2026-11-25T12:00:06.585Z","level":"info","service":"agents","event":"worker.submitted","jobId":"8","deliverable":"0xa1b927b839ad5ecc9932ef6d6b3ccc1d753ede5f0402d9bd82976faa10434b2b"}
+{"t":"2026-11-25T12:00:11.632Z","level":"info","service":"agents","event":"worker.submitted","jobId":"9","deliverable":"0x46724abe123a2a6500a74c51eb9f9aeba2a9a10310ea7f3d4a6d80ab302ca4f1"}
+{"t":"2026-11-25T12:00:11.738Z","level":"info","service":"agents","event":"watch.ok","jobId":"9","reason":"Output matches the job spec."}
+{"t":"2026-11-25T12:00:36.817Z","level":"info","service":"agents","event":"finalizer.finalized","jobId":"8"}
+{"t":"2026-11-25T12:00:37.076Z","level":"warn","service":"agents","event":"finalizer.skip","jobId":"8","error":"The job is Completed, so this action isn't allowed now."}
+{"t":"2026-11-25T12:00:43.199Z","level":"warn","service":"agents","event":"finalizer.skip","jobId":"9","error":"The job is Completed, so this action isn't allowed now."}
+{"t":"2026-11-25T12:00:46.432Z","level":"info","service":"agents","event":"finalizer.finalized","jobId":"9"}
+{"t":"2026-11-25T12:00:50.243Z","level":"info","service":"agents","event":"watch.ok","jobId":"7","reason":"Output matches the job spec."}
+{"t":"2026-11-25T12:00:51.257Z","level":"info","service":"agents","event":"worker.submitted","jobId":"7","deliverable":"0xb7a2630679fdc8f1ee8fa336aad48f4a086cac7e02943ce6f561ac954cb138c3"}
+{"t":"2026-11-25T12:01:51.307Z","level":"warn","service":"agents","event":"finalizer.skip","jobId":"7","error":"The job is Completed, so this action isn't allowed now."}
+{"t":"2026-11-25T12:01:54.505Z","level":"info","service":"agents","event":"scenario.done","label":"S1 zero-capital tree","rootId":"7","seconds":129,"paid":"100000","children":[{"id":"8","ui":"Settled","provider":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3"},{"id":"9","ui":"Settled","provider":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}]}
+{"t":"2026-11-25T12:01:54.625Z","level":"info","service":"agents","event":"finalizer.finalized","jobId":"7"}
+{"t":"2026-11-25T12:03:18.399Z","level":"info","service":"agents","event":"scenario.s3","jobId":"10","status":"Expired","paid":"20000","refunded":"20000","net":"0"}
+{"t":"2026-11-25T12:03:18.495Z","level":"info","service":"agents","event":"stack.ready","facilitator":3402,"coordinator":4100,"badMetrics":true}
+{"t":"2026-11-25T12:03:27.936Z","level":"info","service":"agents","event":"settle.broadcast","termsHash":"0x526ae41919dd358952a25accef0d9d075351889ac73af8ddce48d3cbe3695bf2","txHash":"0x742e895d9ebc979114e5fe31ba86b9fb7c176747a0746596b311d38186e8ae7f","explorer":"https://explorer-test.qday.info/tx/0x742e895d9ebc979114e5fe31ba86b9fb7c176747a0746596b311d38186e8ae7f"}
+{"t":"2026-11-25T12:03:32.978Z","level":"info","service":"agents","event":"settle.done","termsHash":"0x526ae41919dd358952a25accef0d9d075351889ac73af8ddce48d3cbe3695bf2","jobId":"11","txHash":"0x742e895d9ebc979114e5fe31ba86b9fb7c176747a0746596b311d38186e8ae7f","explorer":"https://explorer-test.qday.info/tx/0x742e895d9ebc979114e5fe31ba86b9fb7c176747a0746596b311d38186e8ae7f"}
+{"t":"2026-11-25T12:03:33.065Z","level":"info","service":"agents","event":"agent.hired","jobId":"11","url":"http://127.0.0.1:4100"}
+{"t":"2026-11-25T12:03:38.956Z","level":"info","service":"agents","event":"worker.auto-accepted","jobId":"11"}
+{"t":"2026-11-25T12:03:47.788Z","level":"info","service":"agents","event":"worker.auto-accepted","jobId":"12"}
+{"t":"2026-11-25T12:03:48.776Z","level":"info","service":"agents","event":"work.dataset","jobId":"12","transfers":11}
+{"t":"2026-11-25T12:03:51.940Z","level":"info","service":"agents","event":"coordinator.subcontracted","root":"11","data":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3","metrics":"0x80Dec5f266418EB8ae26A6C2Ee592c9082E4c00d"}
+{"t":"2026-11-25T12:03:55.029Z","level":"info","service":"agents","event":"worker.submitted","jobId":"12","deliverable":"0x67246a77c712b6f41b07258a982d919aeec6ba85029bbb43c5b0b6ef329c1d91"}
+{"t":"2026-11-25T12:03:55.132Z","level":"info","service":"agents","event":"watch.ok","jobId":"12","reason":"Output matches the job spec."}
+{"t":"2026-11-25T12:03:56.821Z","level":"info","service":"agents","event":"worker.auto-accepted","jobId":"13"}
+{"t":"2026-11-25T12:03:57.564Z","level":"info","service":"agents","event":"work.metrics","jobId":"13","bad":true}
+{"t":"2026-11-25T12:04:03.806Z","level":"info","service":"agents","event":"worker.submitted","jobId":"13","deliverable":"0x95b33a11b6dea5555379a4f700f998f1a2f63d10fac141f79379f1e5a48a8fd7"}
+{"t":"2026-11-25T12:04:06.127Z","level":"info","service":"agents","event":"watch.challenged","jobId":"13","reason":"The metrics do not match the dataset (fields: flags, inflow).","txHash":"0x55eeba69b878f8c0a7cdad7cfcb6c4102818b94e7bec01705e9fd649e2d6fb46","explorer":"https://explorer-test.qday.info/tx/0x55eeba69b878f8c0a7cdad7cfcb6c4102818b94e7bec01705e9fd649e2d6fb46"}
+{"t":"2026-11-25T12:04:06.401Z","level":"error","service":"agents","event":"watch.challenge-failed","jobId":"13","error":"This job is already being challenged; the evaluator decides now."}
+{"t":"2026-11-25T12:04:07.637Z","level":"error","service":"agents","event":"watch.challenge-failed","jobId":"13","error":"This job is already being challenged; the evaluator decides now."}
+{"t":"2026-11-25T12:04:12.425Z","level":"error","service":"agents","event":"evaluator.failed","jobId":"13","decision":"reject","error":"The job is Rejected, so this action isn't allowed now."}
+{"t":"2026-11-25T12:04:14.697Z","level":"info","service":"agents","event":"evaluator.decision","jobId":"13","decision":"reject","reason":"The metrics do not match the dataset (fields: flags, inflow).","txHash":"0x6daacfc7993d69cf961e72fc541034e85d39393df27609eb4c2425ea2a89eff0","explorer":"https://explorer-test.qday.info/tx/0x6daacfc7993d69cf961e72fc541034e85d39393df27609eb4c2425ea2a89eff0"}
+{"t":"2026-11-25T12:04:14.940Z","level":"error","service":"agents","event":"evaluator.failed","jobId":"13","decision":"reject","error":"The transaction was mined but reverted."}
+{"t":"2026-11-25T12:04:18.510Z","level":"warn","service":"agents","event":"coordinator.rehired","root":"11","fallback":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}
+{"t":"2026-11-25T12:04:20.394Z","level":"info","service":"agents","event":"worker.auto-accepted","jobId":"14"}
+{"t":"2026-11-25T12:04:21.361Z","level":"info","service":"agents","event":"work.metrics","jobId":"14","bad":false}
+{"t":"2026-11-25T12:04:23.588Z","level":"info","service":"agents","event":"worker.submitted","jobId":"14","deliverable":"0xf165223b02551b8246b5fa6f403c4d3c0db822183f3a9e439654aaa1c2d66c5a"}
+{"t":"2026-11-25T12:04:24.694Z","level":"info","service":"agents","event":"watch.ok","jobId":"14","reason":"Output matches the job spec."}
+{"t":"2026-11-25T12:04:25.679Z","level":"info","service":"agents","event":"finalizer.finalized","jobId":"12"}
+{"t":"2026-11-25T12:04:25.975Z","level":"warn","service":"agents","event":"finalizer.skip","jobId":"12","error":"The job is Completed, so this action isn't allowed now."}
+{"t":"2026-11-25T12:04:58.122Z","level":"warn","service":"agents","event":"finalizer.skip","jobId":"14","error":"The job is Completed, so this action isn't allowed now."}
+{"t":"2026-11-25T12:05:01.390Z","level":"info","service":"agents","event":"finalizer.finalized","jobId":"14"}
+{"t":"2026-11-25T12:05:05.093Z","level":"info","service":"agents","event":"watch.ok","jobId":"11","reason":"Output matches the job spec."}
+{"t":"2026-11-25T12:05:05.840Z","level":"info","service":"agents","event":"worker.submitted","jobId":"11","deliverable":"0x94d46ea01d36cb8cab98d57a430c47921a3670dcc3d373c343eca57efa039959"}
+{"t":"2026-11-25T12:06:06.344Z","level":"warn","service":"agents","event":"finalizer.skip","jobId":"11","error":"The job is Completed, so this action isn't allowed now."}
+{"t":"2026-11-25T12:06:08.767Z","level":"info","service":"agents","event":"scenario.done","label":"S2 hallucinating worker, challenge, re-hire","rootId":"11","seconds":156,"paid":"100000","children":[{"id":"12","ui":"Settled","provider":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3"},{"id":"13","ui":"Rejected","provider":"0x80Dec5f266418EB8ae26A6C2Ee592c9082E4c00d"},{"id":"14","ui":"Settled","provider":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}]}
+{"t":"2026-11-25T12:06:08.792Z","level":"info","service":"agents","event":"report","scenario":"S0 seed","ok":true,"detail":{"bondBps":"0","creditLimit":"100000","balance":"0"}}
+PASS  S0 seed  {"bondBps":"0","creditLimit":"100000","balance":"0"}
+{"t":"2026-11-25T12:06:08.793Z","level":"info","service":"agents","event":"report","scenario":"S1 zero-capital tree","ok":true,"detail":{"rootId":"7","paid":"100000","funded":"100000","children":[{"id":"8","ui":"Settled","provider":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3"},{"id":"9","ui":"Settled","provider":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}],"seconds":129}}
+PASS  S1 zero-capital tree  {"rootId":"7","paid":"100000","funded":"100000","children":[{"id":"8","ui":"Settled","provider":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3"},{"id":"9","ui":"Settled","provider":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}],"seconds":129}
+{"t":"2026-11-25T12:06:08.795Z","level":"info","service":"agents","event":"report","scenario":"S4 prompt injection","ok":true,"detail":{"quoteRefused":"The quote asks to pay an address other than the Chainwork escrow. Refusing.","hireRefused":"The quote asks to pay an address other than the Chainwork escrow. Refusing.","sessionRefused":"The client has 0.2 tUSD8, needs 1 tUSD8.","newJobs":"0"}}
+PASS  S4 prompt injection  {"quoteRefused":"The quote asks to pay an address other than the Chainwork escrow. Refusing.","hireRefused":"The quote asks to pay an address other than the Chainwork escrow. Refusing.","sessionRefused":"The client has 0.2 tUSD8, needs 1 tUSD8.","newJobs":"0"}
+{"t":"2026-11-25T12:06:08.796Z","level":"info","service":"agents","event":"report","scenario":"S5 kill switch","ok":true,"detail":{"refusedWith":"The smart account is frozen by its owner (kill switch): it signs nothing until unfrozen.","newJobs":"0"}}
+PASS  S5 kill switch  {"refusedWith":"The smart account is frozen by its owner (kill switch): it signs nothing until unfrozen.","newJobs":"0"}
+{"t":"2026-11-25T12:06:08.798Z","level":"info","service":"agents","event":"report","scenario":"S3 ghosting refund","ok":true,"detail":{"jobId":"10","status":"Expired","paid":"20000","refunded":"20000","net":"0"}}
+PASS  S3 ghosting refund  {"jobId":"10","status":"Expired","paid":"20000","refunded":"20000","net":"0"}
+{"t":"2026-11-25T12:06:08.799Z","level":"info","service":"agents","event":"report","scenario":"S2 hallucinating worker, challenge, re-hire","ok":true,"detail":{"rootId":"11","paid":"100000","funded":"100000","children":[{"id":"12","ui":"Settled","provider":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3"},{"id":"13","ui":"Rejected","provider":"0x80Dec5f266418EB8ae26A6C2Ee592c9082E4c00d"},{"id":"14","ui":"Settled","provider":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}],"seconds":156}}
+PASS  S2 hallucinating worker, challenge, re-hire  {"rootId":"11","paid":"100000","funded":"100000","children":[{"id":"12","ui":"Settled","provider":"0xa5130D2A006d13750Fbc2E7b66cad6Cb9ad9B5c3"},{"id":"13","ui":"Rejected","provider":"0x80Dec5f266418EB8ae26A6C2Ee592c9082E4c00d"},{"id":"14","ui":"Settled","provider":"0x7117c6741d15f794751C447Df5F96F48501D1DA9"}],"seconds":156}
+{"t":"2026-11-25T12:06:09.626Z","level":"info","service":"agents","event":"finalizer.finalized","jobId":"11"}
