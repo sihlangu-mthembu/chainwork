@@ -3,7 +3,7 @@ name: aevum-status
 on:
   workflow_dispatch:
   push:
-    branches: [aevum]
+    branches: [main, aevum]
     paths: ["scripts/aevum-status.mjs", "deployments/aevum.json", ".github/workflows/aevum-status.yml"]
   schedule:
     - cron: "17 */6 * * *"
@@ -16,3 +16,17 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/aevum-status.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    # Prove the code at every deployed address is exactly this repository's source.
+    if: ${{ hashFiles('deployments/aevum.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - run: forge build >/dev/null
+      - run: python3 scripts/verify_bytecode.py deployments/aevum.json https://rpc-test.qday.info | tee -a "$GITHUB_STEP_SUMMARY"

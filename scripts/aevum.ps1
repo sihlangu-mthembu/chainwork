@@ -33,7 +33,7 @@ function Need-Password {
 
 function Check {
   Say "Checking tools and the deployer's balance"
-  foreach ($tool in "git", "node", "pnpm", "forge", "cast", "python") {
+  foreach ($tool in "git", "node", "pnpm", "forge", "cast") {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { Fail "$tool is not installed or not on PATH." }
   }
   $chain = (cast chain-id --rpc-url $Rpc).Trim()
@@ -59,7 +59,9 @@ function Deploy {
 
 function Verify {
   Say "Checking the deployed bytecode is exactly this source"
-  python scripts/verify_bytecode.py deployments/aevum.json $Rpc 2>&1 | Tee-Object -Append $Log
+  $py = @("python", "py", "python3") | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
+  if (-not $py) { Done "Python not found: skipped here. GitHub runs the same check when you push deployments\aevum.json."; return }
+  & $py scripts/verify_bytecode.py deployments/aevum.json $Rpc 2>&1 | Tee-Object -Append $Log
   if ($LASTEXITCODE -ne 0) { Fail "Bytecode check failed. See $Log." }
   Done "Every contract matches."
 }
