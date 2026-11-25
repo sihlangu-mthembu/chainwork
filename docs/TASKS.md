@@ -1,7 +1,7 @@
 # TASKS.md — Chainwork task board
 
 Status values: `todo` · `in-progress (<who>)` · `blocked (<why>)` · `requested` · `done (<commit>)`.
-Gates: **G1 Nov 26** live job settles on Aevum · **G2 Nov 28** full demo tree live · **Submit Nov 30** · feature freeze Dec 8 · deadline Dec 11 08:00 UTC.
+Gates: **G1 Nov 26** live job settles on Aevum (passed 25 Nov)  · **G2 Nov 28** full demo tree live (passed 25 Nov: S0–S5 on Aevum) · **Submit Nov 30** · feature freeze Dec 8 · deadline Dec 11 08:00 UTC.
 
 Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `packages/types/abi/` and a local `anvil` chain. Claude ships `T1.9 DeployLocal` (escrow + a local FiatToken V2.2 copy + seeded wallets) by **Nov 25 end of day** so services can run end to end locally.
 
@@ -9,11 +9,11 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 
 | ID | Task | Acceptance | Status |
 |---|---|---|---|
-| T0.1 | 8 wallets generated (addresses in CONTEXT.md). Keys go into encrypted keystores in `C:\dev\chainwork` once that folder is connected; never committed | keystores exist locally | in-progress (claude) |
-| T0.2 | Faucet: 5 tQDAY to every wallet (web faucet, 24 h limit). Discord `/faucet` tUSD8 for client, specialist-bad, backup, watcher. **Leave the coordinator at 0 tUSD8** (that's the demo). | balances visible on the explorer | todo |
+| T0.1 | 8 wallets generated (addresses in CONTEXT.md). Keys go into encrypted keystores in `C:\dev\chainwork` once that folder is connected; never committed | keystores exist locally | done (claude) |
+| T0.2 | Faucet: 5 tQDAY to every wallet (web faucet, 24 h limit). Discord `/faucet` tUSD8 for client, specialist-bad, backup, watcher. **Leave the coordinator at 0 tUSD8** (that's the demo). | balances visible on the explorer | done (human + claude): deployer funded from the Discord faucet wallet; repo at C:\\dev\\chainwork |
 | T0.3 | Starter kit = 8-page PDF guide; notes in the OneDrive `reference/starter-guide-notes.md` (official judging wording) | done | done (claude) |
-| T0.4 | Discord: faucet top-up requested (the web faucet needs a mainnet balance; tUSD8 web faucet is 1/day). Also ask: Sourcify for 44005? public x402 facilitator endpoint? | answers added to CONTEXT.md | in-progress (human) |
-| T0.5 | Clone the repo to `C:\dev\chainwork` (outside OneDrive) and connect that folder to the Claude desktop app | folder connected | todo (human) |
+| T0.4 | Discord: faucet top-up requested (the web faucet needs a mainnet balance; tUSD8 web faucet is 1/day). Also ask: Sourcify for 44005? public x402 facilitator endpoint? | answers added to CONTEXT.md | done (human + claude): deployer funded from the Discord faucet wallet; repo at C:\\dev\\chainwork |
+| T0.5 | Clone the repo to `C:\dev\chainwork` (outside OneDrive) and connect that folder to the Claude desktop app | folder connected | done (human + claude): deployer funded from the Discord faucet wallet; repo at C:\\dev\\chainwork |
 | T0.6 | Public GitHub repo created and attached: https://github.com/sihlangu-mthembu/chainwork | repo URL in README | done (claude) |
 
 ## L1 Contracts (Claude)
@@ -39,7 +39,7 @@ Until L1 deploys to Aevum (T1.10), DeepSeek lanes build against the ABIs in `pac
 | T2.2 | fund (direct or via facilitator), accept (permit), subcontract, submit, submitParent, submitWithProof, challenge, finalize, settleTree; retries on transient RPC errors | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.3 | readTree(rootId) via eth_call only → `JobNode`; UI state mapping; receipt builder with 500-block log chunks | `CHAINWORK_LOCAL=1 pnpm -F @chainwork/sdk test` | done (claude) |
 | T2.4 | Plain-English error decoding for every custom error and FiatToken revert string | `pnpm -F @chainwork/sdk test` | done (claude) |
-| T2.5 | `packages/sdk/scripts/gate1.ts` (fund → accept → submit → finalize, explorer links) and `fund-wallets.ts` (split deployer funds; coordinator gets gas only). Both pass on the local chain. **Aevum run waits on testnet funds** | `NETWORK=aevum pnpm -F @chainwork/sdk gate1` prints GATE 1 PASSED | blocked (testnet funds) |
+| T2.5 | `packages/sdk/scripts/gate1.ts` (fund → accept → submit → finalize, explorer links) and `fund-wallets.ts` (split deployer funds; coordinator gets gas only). Both pass on the local chain. **Aevum run waits on testnet funds** | `NETWORK=aevum pnpm -F @chainwork/sdk gate1` prints GATE 1 PASSED | done (claude): GATE 1 PASSED on Aevum, 25 Nov (docs/evidence/aevum-run.log) |
 | T2.6 | SDK wrapper for the escrow read view `getJobsPage(cursor, limit)` returning jobs, exts and nextCursor (the dashboard calls the view directly today; T5.2 needs the wrapper so paging logic lives in L2) | `pnpm -F @chainwork/sdk typecheck`; dashboard imports the wrapper instead of `readJobsPage` | done (claude): `getJobsPage`, `getRecentJobs`, `allJobs` in `@chainwork/sdk`; dashboard uses them |
 
 ## L3 Services (DeepSeek)

@@ -111,3 +111,17 @@ FiatToken quirks: blacklist exists (`isBlacklisted`); EIP-3009 nonces are arbitr
 - [ ] Bundler reachable from a server, and which EntryPoint it serves
 - [ ] Sourcify support for chain 44005
 - [ ] Public QDay x402 facilitator endpoint, if any
+
+
+## Chainwork on Aevum (deployed 25 Nov 2026, block 4085651)
+
+Source of truth: `deployments/aevum.json`. Bytecode verified: all `MATCH`.
+
+| Contract | Address |
+|---|---|
+| ChainworkEscrow | [`0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43`](https://explorer-test.qday.info/address/0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43) |
+| ReputationRegistry | [`0x11Cde75aa12E8D3146e8a8648675aC8a064c2Edf`](https://explorer-test.qday.info/address/0x11Cde75aa12E8D3146e8a8648675aC8a064c2Edf) |
+| BudgetGuardHook | [`0x2D9545aeBB6Ec629f6BAEdCEbbf7d9B5c981bbE1`](https://explorer-test.qday.info/address/0x2D9545aeBB6Ec629f6BAEdCEbbf7d9B5c981bbE1) |
+| HashVerifier | [`0x018E5318378795b0977c22472B6EC64b24a9738B`](https://explorer-test.qday.info/address/0x018E5318378795b0977c22472B6EC64b24a9738B) |
+| SignedDataVerifier | [`0x7c6F62440FbDa111c12B73eE742914ED0f822aa2`](https://explorer-test.qday.info/address/0x7c6F62440FbDa111c12B73eE742914ED0f822aa2) |
+| Client AgentAccount | [`0x08cfC1A474782a9627121cE42a33D76320dC4817`](https://explorer-test.qday.info/address/0x08cfC1A474782a9627121cE42a33D76320dC4817) |

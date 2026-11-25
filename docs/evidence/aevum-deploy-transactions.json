@@ -1,0 +1,47 @@
+{
+ "chain": 44005,
+ "transactions": [
+  {
+   "hash": "0xc96a3744f1e4326f987df14605c92b38accef3fd6ec3e44d26510f0a912cce66",
+   "contractName": "ReputationRegistry",
+   "contractAddress": "0x11cde75aa12e8d3146e8a8648675ac8a064c2edf",
+   "type": "CREATE"
+  },
+  {
+   "hash": "0xe4e3f36c36fd2060b7df65ea036ae9fae1a87e301962db29e3e148f948bdb129",
+   "contractName": "ChainworkEscrow",
+   "contractAddress": "0xc8a46c937c993cdd7e6c865b38fb3b32c275aa43",
+   "type": "CREATE"
+  },
+  {
+   "hash": "0x6249ee4666f43746b71580c92567d1255e120d8de7f2a68ac686cfdcddd4c0fb",
+   "contractName": "ReputationRegistry",
+   "contractAddress": "0x11cde75aa12e8d3146e8a8648675ac8a064c2edf",
+   "type": "CALL"
+  },
+  {
+   "hash": "0x4964e242eda37910a55ae25a5bd7ea7585bdd09680e55ba636b3e4f7c1021e5b",
+   "contractName": "BudgetGuardHook",
+   "contractAddress": "0x2d9545aebb6ec629f6baedcebbf7d9b5c981bbe1",
+   "type": "CREATE"
+  },
+  {
+   "hash": "0x871277ddf89fd6b111c29c32ccc7aed9590f6d48733f35318871aa7288300066",
+   "contractName": "HashVerifier",
+   "contractAddress": "0x018e5318378795b0977c22472b6ec64b24a9738b",
+   "type": "CREATE"
+  },
+  {
+   "hash": "0xe7f3c1e59703ce6d2118ae8cfcf27cadce804b72e42d73596f8c77f22f8fa881",
+   "contractName": "SignedDataVerifier",
+   "contractAddress": "0x7c6f62440fbda111c12b73ee742914ed0f822aa2",
+   "type": "CREATE"
+  },
+  {
+   "hash": "0x0b0cd4d4ebef8432f17a9928fd27963913795892153e82a90504e0b797746120",
+   "contractName": "AgentAccount",
+   "contractAddress": "0x08cfc1a474782a9627121ce42a33d76320dc4817",
+   "type": "CREATE"
+  }
+ ]
+}

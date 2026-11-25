@@ -292,10 +292,23 @@ every demo amount is cents (0.01–0.10 tUSD8).
 
 **tUSD8** — `0x456569838f1d43009A91ebA4263147Afd7233483` (proxy; use this one), chain 44005.
 
-**Aevum contracts — status: deployment pending.** `deployments/aevum.json` does not exist in this
-tree, so there are **no Aevum Chainwork addresses to quote**. The deploy script writes that file, and
-the address list is then published here and in [docs/CONTEXT.md](docs/CONTEXT.md). Do not trust any
-Chainwork address that is not in the repository.
+**Aevum testnet deployment** ([deployments/aevum.json](deployments/aevum.json), chain 44005, deployed at
+block 4085651 on 25 Nov 2026). Every address below was checked against this source with
+`scripts/verify_bytecode.py`: all six report `MATCH` (also re-checked by the `aevum-status` CI job).
+
+| Contract | Address |
+|---|---|
+| ChainworkEscrow | [`0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43`](https://explorer-test.qday.info/address/0xC8a46c937c993cDd7E6c865B38fb3b32c275AA43) |
+| ReputationRegistry | [`0x11Cde75aa12E8D3146e8a8648675aC8a064c2Edf`](https://explorer-test.qday.info/address/0x11Cde75aa12E8D3146e8a8648675aC8a064c2Edf) |
+| BudgetGuardHook | [`0x2D9545aeBB6Ec629f6BAEdCEbbf7d9B5c981bbE1`](https://explorer-test.qday.info/address/0x2D9545aeBB6Ec629f6BAEdCEbbf7d9B5c981bbE1) |
+| HashVerifier | [`0x018E5318378795b0977c22472B6EC64b24a9738B`](https://explorer-test.qday.info/address/0x018E5318378795b0977c22472B6EC64b24a9738B) |
+| SignedDataVerifier | [`0x7c6F62440FbDa111c12B73eE742914ED0f822aa2`](https://explorer-test.qday.info/address/0x7c6F62440FbDa111c12B73eE742914ED0f822aa2) |
+| Client AgentAccount | [`0x08cfC1A474782a9627121cE42a33D76320dC4817`](https://explorer-test.qday.info/address/0x08cfC1A474782a9627121cE42a33D76320dC4817) |
+
+Live evidence: Gate 1 (one paid job settled) and all six scenarios S0–S5 passed on Aevum on
+25 Nov 2026. The full run, with an explorer link for every transaction, is in
+[docs/evidence/aevum-run.log](docs/evidence/aevum-run.log); the deploy transactions are in
+[docs/evidence/aevum-deploy-transactions.json](docs/evidence/aevum-deploy-transactions.json).
 
 **Local anvil deployment** — [deployments/local.json](deployments/local.json), chain 31337, no value:
 
