@@ -11,7 +11,10 @@ param(
   [ValidateSet("all", "check", "deploy", "verify", "fund", "gate1", "demo", "status")]
   [string]$Step = "all"
 )
-$ErrorActionPreference = "Stop"
+# Native tools (forge, cast, pnpm) write progress and warnings to stderr; Windows PowerShell 5.1
+# turns those into errors under "Stop". Each step checks $LASTEXITCODE instead.
+$ErrorActionPreference = "Continue"
+$env:FOUNDRY_DISABLE_NIGHTLY_WARNING = "1"
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
 $Rpc = "https://rpc-test.qday.info"
@@ -36,10 +39,10 @@ function Check {
   foreach ($tool in "git", "node", "pnpm", "forge", "cast") {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { Fail "$tool is not installed or not on PATH." }
   }
-  $chain = (cast chain-id --rpc-url $Rpc).Trim()
+  $chain = (cast chain-id --rpc-url $Rpc 2>$null | Select-Object -Last 1).Trim()
   if ($chain -ne "44005") { Fail "The RPC answered chain $chain, expected 44005." }
-  $gas = [decimal](cast balance $Deployer --rpc-url $Rpc --ether)
-  $usd = [decimal]((cast call $Token "balanceOf(address)(uint256)" $Deployer --rpc-url $Rpc).Split(" ")[0]) / 1000000
+  $gas = [decimal](cast balance $Deployer --rpc-url $Rpc --ether 2>$null | Select-Object -Last 1)
+  $usd = [decimal]((cast call $Token "balanceOf(address)(uint256)" $Deployer --rpc-url $Rpc 2>$null | Select-Object -Last 1).Split(" ")[0]) / 1000000
   Done "Aevum reachable (chain 44005). Deployer $Deployer has $gas tQDAY and $usd tUSD8."
   if ($gas -lt 0.5) { Fail "The deployer needs at least 0.5 tQDAY. Send some to $Deployer and run this again." }
   if ($usd -lt 0.8) { Fail "The deployer needs at least 0.8 tUSD8. Send some to $Deployer and run this again." }
@@ -51,8 +54,13 @@ function Deploy {
   Say "Deploying the contracts to Aevum"
   Need-Password
   $env:ACCOUNT_OWNER = $ClientOwner
-  forge script contracts/script/Deploy.s.sol:DeployAevum --rpc-url $Rpc --broadcast --legacy --slow `
-    --keystore .keys/deployer --password $env:CHAINWORK_KEYSTORE_PASSWORD 2>&1 | Tee-Object -Append $Log | Select-String -Pattern "Error|ONCHAIN EXECUTION|Contract Address|deployed" | ForEach-Object { "   $_" }
+  # Through cmd so forge's stderr stays plain text; the password goes in an environment variable, not the command line.
+  $env:ETH_PASSWORD = $env:CHAINWORK_KEYSTORE_PASSWORD
+  & cmd /c "forge script contracts/script/Deploy.s.sol:DeployAevum --rpc-url $Rpc --broadcast --legacy --slow --keystore .keys/deployer 2>&1" |
+    Tee-Object -Append $Log | Select-String -Pattern "Error|ONCHAIN EXECUTION|Contract Address|deployed|Transactions saved" | ForEach-Object { "   $_" }
+  $code = $LASTEXITCODE
+  Remove-Item Env:ETH_PASSWORD -ErrorAction SilentlyContinue
+  if ($code -ne 0) { Fail "forge exited with code $code. See $Log." }
   if (-not (Test-Path "deployments\aevum.json")) { Fail "Deploy did not write deployments\aevum.json. See $Log." }
   Done "Deployed. Addresses are in deployments\aevum.json."
 }
@@ -61,7 +69,7 @@ function Verify {
   Say "Checking the deployed bytecode is exactly this source"
   $py = @("python", "py", "python3") | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
   if (-not $py) { Done "Python not found: skipped here. GitHub runs the same check when you push deployments\aevum.json."; return }
-  & $py scripts/verify_bytecode.py deployments/aevum.json $Rpc 2>&1 | Tee-Object -Append $Log
+  & cmd /c "$py scripts/verify_bytecode.py deployments/aevum.json $Rpc 2>&1" | Tee-Object -Append $Log
   if ($LASTEXITCODE -ne 0) { Fail "Bytecode check failed. See $Log." }
   Done "Every contract matches."
 }
@@ -71,7 +79,7 @@ function Fund {
   Need-Password
   $env:NETWORK = "aevum"
   if (-not $env:GAS_EACH) { $env:GAS_EACH = "0.05" }
-  pnpm -s -F @chainwork/sdk fund-wallets 2>&1 | Tee-Object -Append $Log
+  & cmd /c "pnpm -s -F @chainwork/sdk fund-wallets 2>&1" | Tee-Object -Append $Log
   if ($LASTEXITCODE -ne 0) { Fail "Funding failed. See $Log." }
   Done "Wallets funded."
 }
@@ -80,7 +88,7 @@ function Gate1 {
   Say "Gate 1: one paid job settles on Aevum"
   Need-Password
   $env:NETWORK = "aevum"
-  pnpm -s -F @chainwork/sdk gate1 2>&1 | Tee-Object -Append $Log
+  & cmd /c "pnpm -s -F @chainwork/sdk gate1 2>&1" | Tee-Object -Append $Log
   if ($LASTEXITCODE -ne 0) { Fail "Gate 1 failed. See $Log." }
   Done "Gate 1 passed."
 }
@@ -90,7 +98,7 @@ function Demo {
   Need-Password
   $env:NETWORK = "aevum"
   Remove-Item -Recurse -Force "apps\agents\data" -ErrorAction SilentlyContinue
-  pnpm -s -F agents start all 2>&1 | Tee-Object -Append $Log | Select-String -Pattern "^(PASS|FAIL)|scenario\.|error" | ForEach-Object { "   $_" }
+  & cmd /c "pnpm -s -F agents start all 2>&1" | Tee-Object -Append $Log | Select-String -Pattern "^(PASS|FAIL)|scenario\.|error" | ForEach-Object { "   $_" }
   if ($LASTEXITCODE -ne 0) { Fail "A scenario failed. See $Log." }
   Done "All scenarios passed on Aevum."
 }
